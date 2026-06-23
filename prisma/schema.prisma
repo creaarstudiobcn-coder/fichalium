@@ -1,0 +1,96 @@
+// Esquema Prisma — SLICE 2: modelo de datos completo + tenancy.
+// Regla de oro: TODA tabla con datos de cliente lleva company_id e índice por él.
+// La Row-Level Security y el trigger append-only se aplican aparte, en
+// `scripts/apply-rls.mjs` (SQL crudo), porque Prisma no modela RLS/triggers.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER // quien registra la empresa
+  ADMIN
+  EMPLOYEE
+}
+
+enum TimeEntryType {
+  CLOCK_IN
+  CLOCK_OUT
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  users       User[]
+  employees   Employee[]
+  timeEntries TimeEntry[]
+
+  @@map("companies")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  companyId    String   @map("company_id")
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  role         Role     @default(EMPLOYEE)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company        Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdEntries TimeEntry[] @relation("EntryCreator")
+
+  @@index([companyId])
+  @@map("users")
+}
+
+model Employee {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  name      String
+  email     String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  timeEntries TimeEntry[]
+
+  // Email único DENTRO de la empresa (no global): el índice incluye company_id.
+  @@unique([companyId, email])
+  @@map("employees")
+}
+
+// APPEND-ONLY. No se hace UPDATE ni DELETE jamás (garantizado por trigger en BD).
+// Una corrección es un INSERT nuevo con `correctsId` apuntando al original.
+model TimeEntry {
+  id         String        @id @default(cuid())
+  companyId  String        @map("company_id")
+  employeeId String        @map("employee_id")
+  type       TimeEntryType
+  timestamp  DateTime      @db.Timestamptz // momento del fichaje (UTC)
+  correctsId String?       @map("corrects_id")
+  createdBy  String        @map("created_by")
+  reason     String? // motivo, obligatorio en correcciones (validado en código)
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee    Employee   @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  creator     User       @relation("EntryCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  corrects    TimeEntry? @relation("Corrections", fields: [correctsId], references: [id], onDelete: SetNull)
+  correctedBy TimeEntry[] @relation("Corrections")
+
+  @@index([companyId])
+  @@index([employeeId])
+  @@index([companyId, employeeId])
+  @@index([correctsId])
+  @@map("time_entries")
+}
