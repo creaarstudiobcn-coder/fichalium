@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { withTenant } from "@/lib/tenant";
+import { Brand } from "@/components/Brand";
 
 async function SignOutButton({ label }: { label: string }) {
   return (
@@ -11,7 +12,7 @@ async function SignOutButton({ label }: { label: string }) {
         await signOut({ redirectTo: "/login" });
       }}
     >
-      <button className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100">
+      <button className="rounded-lg border border-navy/15 px-3 py-1.5 text-sm font-medium text-navy/80 transition hover:bg-navy/5">
         {label}
       </button>
     </form>
@@ -39,11 +40,11 @@ export default async function DashboardLayout({
     const closed = company.status === "CLOSED";
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 text-center">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h1 className="text-xl font-bold text-slate-900">
+        <div className="rounded-2xl border border-navy/10 bg-white p-8 shadow-sm">
+          <h1 className="text-xl text-navy">
             {closed ? "Cuenta dada de baja" : "Cuenta suspendida"}
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-navy/60">
             {closed
               ? "Esta empresa ha sido dada de baja. Contacta con soporte si crees que es un error."
               : "El acceso a esta empresa está suspendido temporalmente. Contacta con soporte."}
@@ -58,9 +59,16 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen">
-      <nav className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-1">
+      <nav className="border-b border-navy/10 bg-white">
+        <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3 sm:px-6">
+          <Brand
+            size={28}
+            textClassName="hidden text-lg text-navy md:inline"
+            className="shrink-0"
+          />
+          <span className="hidden h-5 w-px shrink-0 bg-navy/10 md:inline-block" />
+          {/* Tira de enlaces: scroll horizontal propio en móvil, nunca de página. */}
+          <div className="no-scrollbar flex flex-1 items-center gap-1 overflow-x-auto whitespace-nowrap">
             <NavLink href="/dashboard">Panel</NavLink>
             <NavLink href="/dashboard/fichar">Fichar</NavLink>
             <NavLink href="/dashboard/informes">Informes</NavLink>
@@ -69,7 +77,9 @@ export default async function DashboardLayout({
               <NavLink href="/dashboard/suscripcion">Suscripción</NavLink>
             )}
           </div>
-          <SignOutButton label="Cerrar sesión" />
+          <div className="shrink-0">
+            <SignOutButton label="Cerrar sesión" />
+          </div>
         </div>
       </nav>
       {children}
@@ -81,7 +91,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
   return (
     <Link
       href={href}
-      className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+      className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-navy/60 transition hover:bg-navy/5 hover:text-navy"
     >
       {children}
     </Link>

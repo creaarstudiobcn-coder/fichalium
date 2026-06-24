@@ -35,7 +35,7 @@ export function ActionButton({
           }}
           className={
             className ??
-            "rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-60"
+            "rounded-lg border border-navy/15 px-3 py-1.5 text-xs font-medium text-navy/80 transition hover:bg-navy/5 disabled:opacity-60"
           }
         >
           {pending ? "…" : label}

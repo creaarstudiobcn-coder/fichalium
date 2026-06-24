@@ -34,15 +34,19 @@ export function CookieBanner() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-4">
-      <div className="mx-auto flex max-w-3xl flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-slate-600">
+      <div className="mx-auto flex max-w-3xl flex-col gap-3 rounded-xl border border-navy/10 bg-white p-4 shadow-lg sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-navy/70">
           Usamos cookies para que la app funcione y para mejorar tu experiencia.
           Consulta nuestra{" "}
-          <Link
-            href="/cookies"
-            className="font-medium text-slate-900 underline"
-          >
+          <Link href="/cookies" className="font-medium text-pulse hover:underline">
             política de cookies
+          </Link>{" "}
+          y la{" "}
+          <Link
+            href="/privacidad"
+            className="font-medium text-pulse hover:underline"
+          >
+            política de privacidad
           </Link>
           .
         </p>
@@ -50,14 +54,14 @@ export function CookieBanner() {
           <button
             type="button"
             onClick={() => choose("rejected")}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+            className="rounded-lg border border-navy/15 px-4 py-2 text-sm font-medium text-navy/80 transition hover:bg-navy/5"
           >
             Rechazar
           </button>
           <button
             type="button"
             onClick={() => choose("accepted")}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+            className="rounded-lg bg-ficha px-4 py-2 text-sm font-semibold text-navy transition hover:bg-ficha/90"
           >
             Aceptar
           </button>

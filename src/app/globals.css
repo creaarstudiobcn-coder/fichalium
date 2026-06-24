@@ -1,13 +1,121 @@
 @import "tailwindcss";
 
+/* ──────────────────────────────────────────────────────────────
+   Design tokens de marca "Fichalium".
+   En Tailwind v4 los tokens de @theme generan utilidades:
+   bg-navy, text-ficha, border-pulse, bg-offwhite, font-mono, …
+   ────────────────────────────────────────────────────────────── */
+@theme {
+  --color-navy: #0f1339; /* principal: fondos oscuros, texto */
+  --color-ficha: #00c49a; /* acento: CTAs, botones */
+  --color-pulse: #4b7be5; /* secundario: links, highlights */
+  --color-offwhite: #f4f5fa; /* fondo claro */
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-dm-mono), ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
+}
+
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: var(--color-offwhite);
+  --foreground: var(--color-navy);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Títulos y wordmark en Manrope ExtraBold (800). */
+h1,
+h2,
+h3,
+.font-display {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Intro animada (CSS puro). El logo entra con rebote, el wordmark
+   se monta letra a letra y los controles aparecen al final.
+   ────────────────────────────────────────────────────────────── */
+@keyframes intro-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  80% {
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes intro-letter {
+  0% {
+    opacity: 0;
+    transform: translateY(0.6em) rotate(6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
+}
+
+@keyframes intro-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes intro-fade-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.intro-pop {
+  animation: intro-pop 0.9s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+.intro-letter {
+  display: inline-block;
+  animation: intro-letter 0.45s ease both;
+}
+.intro-rise {
+  animation: intro-rise 0.6s ease both;
+}
+.intro-leaving {
+  animation: intro-fade-out 0.5s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-pop,
+  .intro-letter,
+  .intro-rise {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+  }
+}
+
+/* Tiras horizontales scrollables (navs en móvil) sin barra visible. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

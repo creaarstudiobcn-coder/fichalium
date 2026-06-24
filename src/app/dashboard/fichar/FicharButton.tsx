@@ -27,10 +27,10 @@ export function FicharButton({
           type="submit"
           disabled={pending}
           className={
-            "rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-60 " +
+            "rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-60 " +
             (isEntrada
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-amber-600 hover:bg-amber-700")
+              ? "bg-ficha text-navy hover:bg-ficha/90"
+              : "bg-amber-500 text-white hover:bg-amber-600")
           }
         >
           {pending ? "Registrando…" : label}

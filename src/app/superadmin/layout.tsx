@@ -14,25 +14,27 @@ export default async function SuperadminLayout({
   if (!actor) notFound();
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="border-b border-slate-800 bg-slate-900 text-slate-100">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-1">
-            <span className="mr-3 text-sm font-bold tracking-wide text-amber-400">
+    <div className="min-h-screen bg-offwhite">
+      <nav className="border-b border-navy bg-navy text-white/70">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+          <div className="no-scrollbar flex flex-1 items-center gap-1 overflow-x-auto whitespace-nowrap">
+            <span className="mr-2 shrink-0 text-sm font-bold tracking-wide text-amber-400">
               SUPERADMIN
             </span>
             <NavLink href="/superadmin">Plataforma</NavLink>
             <NavLink href="/superadmin/suscripciones">Suscripciones</NavLink>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400">{actor.email}</span>
+          <div className="flex shrink-0 items-center gap-3">
+            <span className="hidden text-xs text-white/70 sm:inline">
+              {actor.email}
+            </span>
             <form
               action={async () => {
                 "use server";
                 await signOut({ redirectTo: "/login" });
               }}
             >
-              <button className="rounded-lg border border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-slate-800">
+              <button className="rounded-lg border border-white/20 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10">
                 Cerrar sesión
               </button>
             </form>
@@ -48,7 +50,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
   return (
     <Link
       href={href}
-      className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white"
+      className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
     >
       {children}
     </Link>

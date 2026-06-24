@@ -10,7 +10,7 @@ import { suspendAction, unsuspendAction, closeAction } from "./actions";
 export const dynamic = "force-dynamic";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
-  ACTIVE: { label: "Activa", cls: "bg-green-100 text-green-700" },
+  ACTIVE: { label: "Activa", cls: "bg-ficha/15 text-ficha" },
   SUSPENDED: { label: "Suspendida", cls: "bg-amber-100 text-amber-800" },
   CLOSED: { label: "Baja", cls: "bg-red-100 text-red-700" },
 };
@@ -22,8 +22,8 @@ export default async function SuperadminPage() {
   const [metrics, companies] = await Promise.all([getMetrics(), listCompanies()]);
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="text-2xl font-bold text-slate-900">Plataforma</h1>
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <h1 className="text-2xl text-navy">Plataforma</h1>
 
       {/* Métricas */}
       <section className="mt-6 grid gap-4 sm:grid-cols-4">
@@ -39,11 +39,11 @@ export default async function SuperadminPage() {
 
       {/* Empresas */}
       <section className="mt-8">
-        <h2 className="text-lg font-semibold text-slate-900">Empresas</h2>
-        <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white">
-          <table className="w-full text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-              <tr>
+        <h2 className="text-lg text-navy">Empresas</h2>
+        <div className="mt-3 overflow-x-auto rounded-xl border border-navy/10 bg-white">
+          <table className="w-full min-w-[820px] text-sm">
+            <thead className="border-b border-navy/10 bg-offwhite text-left text-xs uppercase tracking-wide text-navy/60">
+              <tr className="whitespace-nowrap">
                 <th className="px-4 py-3 font-medium">Empresa</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
                 <th className="px-4 py-3 font-medium">Suscripción</th>
@@ -52,10 +52,10 @@ export default async function SuperadminPage() {
                 <th className="px-4 py-3 font-medium">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-navy/5">
               {companies.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-navy/40">
                     No hay empresas.
                   </td>
                 </tr>
@@ -64,7 +64,7 @@ export default async function SuperadminPage() {
                 const st = STATUS[c.status] ?? STATUS.ACTIVE;
                 return (
                   <tr key={c.id}>
-                    <td className="px-4 py-3 font-medium text-slate-900">
+                    <td className="px-4 py-3 font-medium text-navy">
                       {c.name}
                     </td>
                     <td className="px-4 py-3">
@@ -74,20 +74,20 @@ export default async function SuperadminPage() {
                         {st.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-navy/70">
                       {c.subscription ? (
                         <>
                           {c.subscription.status}
                           {isActive(c.subscription.status) ? " ✓" : ""}
                         </>
                       ) : (
-                        <span className="text-slate-400">sin suscripción</span>
+                        <span className="text-navy/40">sin suscripción</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-navy/70 font-mono">
                       {c.activeEmployeeCount} / {c.employeeCount}
                     </td>
-                    <td className="px-4 py-3 text-slate-500">
+                    <td className="px-4 py-3 text-navy/60 font-mono">
                       {formatMadrid(c.createdAt)}
                     </td>
                     <td className="px-4 py-3">
@@ -137,12 +137,12 @@ function Metric({
   sub?: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+    <div className="rounded-xl border border-navy/10 bg-white p-5">
+      <p className="text-xs font-medium uppercase tracking-wide text-navy/40">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-slate-400">{sub}</p>}
+      <p className="mt-1 text-2xl font-bold text-navy font-mono">{value}</p>
+      {sub && <p className="mt-0.5 text-xs text-navy/40">{sub}</p>}
     </div>
   );
 }

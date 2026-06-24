@@ -16,8 +16,8 @@ export default async function EmpleadosPage() {
   // Gestión de empleados: solo OWNER.
   if (session.user.role !== "OWNER") {
     return (
-      <main className="mx-auto max-w-4xl px-6 py-12">
-        <h1 className="text-2xl font-bold text-slate-900">Empleados</h1>
+      <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+        <h1 className="text-2xl text-navy">Empleados</h1>
         <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Solo el propietario de la empresa puede gestionar empleados.
         </p>
@@ -32,9 +32,9 @@ export default async function EmpleadosPage() {
   const subActive = isActive(sub?.status);
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <h1 className="text-2xl font-bold text-slate-900">Empleados</h1>
-      <p className="mt-1 text-sm text-slate-500">
+    <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+      <h1 className="text-2xl text-navy">Empleados</h1>
+      <p className="mt-1 text-sm text-navy/60">
         Da de alta a tu equipo. Al desactivar, se conserva su histórico de
         fichajes.
       </p>
@@ -43,7 +43,7 @@ export default async function EmpleadosPage() {
         <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Tu suscripción no está activa. El alta e invitación de empleados están
           bloqueadas (fichar e informes siguen disponibles).{" "}
-          <Link href="/dashboard/suscripcion" className="font-medium underline">
+          <Link href="/dashboard/suscripcion" className="font-medium underline text-pulse">
             Gestionar suscripción
           </Link>
           .
@@ -54,10 +54,10 @@ export default async function EmpleadosPage() {
         <NuevoEmpleadoForm />
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr>
+      <div className="mt-8 overflow-x-auto rounded-xl border border-navy/10 bg-white">
+        <table className="w-full min-w-[720px] text-sm">
+          <thead className="border-b border-navy/10 bg-offwhite text-left text-xs uppercase tracking-wide text-navy/60">
+            <tr className="whitespace-nowrap">
               <th className="px-4 py-3 font-medium">Nombre</th>
               <th className="px-4 py-3 font-medium">Email</th>
               <th className="px-4 py-3 font-medium">Estado</th>
@@ -66,27 +66,27 @@ export default async function EmpleadosPage() {
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-navy/5">
             {employees.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-navy/40">
                   Aún no hay empleados. Añade el primero arriba.
                 </td>
               </tr>
             )}
             {employees.map((e) => (
-              <tr key={e.id} className={e.active ? "" : "bg-slate-50/60"}>
-                <td className="px-4 py-3 font-medium text-slate-900">
+              <tr key={e.id} className={e.active ? "" : "bg-offwhite/60"}>
+                <td className="px-4 py-3 font-medium text-navy">
                   {e.name}
                 </td>
-                <td className="px-4 py-3 text-slate-600">{e.email}</td>
+                <td className="px-4 py-3 text-navy/70">{e.email}</td>
                 <td className="px-4 py-3">
                   {e.active ? (
-                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                    <span className="rounded-full bg-ficha/15 px-2 py-0.5 text-xs font-medium text-ficha">
                       Activo
                     </span>
                   ) : (
-                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600">
+                    <span className="rounded-full bg-navy/10 px-2 py-0.5 text-xs font-medium text-navy/60">
                       Desactivado
                     </span>
                   )}
@@ -98,10 +98,10 @@ export default async function EmpleadosPage() {
                       accountStatus={e.accountStatus}
                     />
                   ) : (
-                    <span className="text-xs text-slate-400">—</span>
+                    <span className="text-xs text-navy/40">—</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-slate-500">
+                <td className="whitespace-nowrap px-4 py-3 font-mono text-navy/60">
                   {formatMadrid(e.createdAt)}
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -112,7 +112,7 @@ export default async function EmpleadosPage() {
                       name="active"
                       value={e.active ? "false" : "true"}
                     />
-                    <button className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100">
+                    <button className="rounded-lg border border-navy/15 px-3 py-1.5 text-xs font-medium text-navy/80 transition hover:bg-navy/5">
                       {e.active ? "Desactivar" : "Reactivar"}
                     </button>
                   </form>

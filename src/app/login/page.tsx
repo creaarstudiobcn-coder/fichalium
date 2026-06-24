@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { Brand } from "@/components/Brand";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,9 +35,12 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">Iniciar sesión</h1>
-        <p className="mt-1 text-sm text-slate-500">
+      <div className="mb-6 flex justify-center">
+        <Brand size={36} textClassName="text-2xl text-navy" />
+      </div>
+      <div className="rounded-2xl border border-navy/10 bg-white p-8 shadow-sm">
+        <h1 className="text-2xl text-navy">Iniciar sesión</h1>
+        <p className="mt-1 text-sm text-navy/60">
           Accede al panel de control horario de tu empresa.
         </p>
 
@@ -58,15 +62,15 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-slate-900 px-4 py-2.5 font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
+            className="w-full rounded-lg bg-ficha px-4 py-2.5 font-semibold text-navy transition hover:bg-ficha/90 disabled:opacity-60"
           >
             {loading ? "Entrando…" : "Entrar"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-navy/60">
           ¿Aún no tienes cuenta?{" "}
-          <Link href="/register" className="font-medium text-slate-900 underline">
+          <Link href="/register" className="font-medium text-pulse hover:underline">
             Crear empresa
           </Link>
         </p>
@@ -81,13 +85,13 @@ function Field({
 }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-slate-700">
+      <span className="mb-1 block text-sm font-medium text-navy/80">
         {label}
       </span>
       <input
         {...props}
         required
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+        className="w-full rounded-lg border border-navy/15 px-3 py-2 text-navy outline-none focus:border-pulse focus:ring-1 focus:ring-pulse"
       />
     </label>
   );

@@ -26,7 +26,7 @@ export function AceptarForm({
         </p>
         <Link
           href="/login"
-          className="block w-full rounded-lg bg-slate-900 px-4 py-2.5 text-center font-medium text-white transition hover:bg-slate-700"
+          className="block w-full rounded-lg bg-ficha px-4 py-2.5 text-center font-semibold text-navy transition hover:bg-ficha/90"
         >
           Iniciar sesión
         </Link>
@@ -39,16 +39,16 @@ export function AceptarForm({
       <input type="hidden" name="token" value={token} />
 
       <div>
-        <span className="mb-1 block text-sm font-medium text-slate-700">
+        <span className="mb-1 block text-sm font-medium text-navy/80">
           Empleado
         </span>
-        <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900">
+        <p className="rounded-lg bg-offwhite px-3 py-2 text-sm text-navy">
           {employeeName} · {email}
         </p>
       </div>
 
       <label className="block">
-        <span className="mb-1 block text-sm font-medium text-slate-700">
+        <span className="mb-1 block text-sm font-medium text-navy/80">
           Crea tu contraseña
         </span>
         <input
@@ -57,9 +57,9 @@ export function AceptarForm({
           required
           minLength={8}
           autoComplete="new-password"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+          className="w-full rounded-lg border border-navy/15 px-3 py-2 text-navy outline-none focus:border-pulse focus:ring-1 focus:ring-pulse"
         />
-        <span className="mt-1 block text-xs text-slate-400">
+        <span className="mt-1 block text-xs text-navy/50">
           Mínimo 8 caracteres.
         </span>
       </label>
@@ -73,7 +73,7 @@ export function AceptarForm({
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-slate-900 px-4 py-2.5 font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
+        className="w-full rounded-lg bg-ficha px-4 py-2.5 font-semibold text-navy transition hover:bg-ficha/90 disabled:opacity-60"
       >
         {pending ? "Creando cuenta…" : "Crear cuenta"}
       </button>

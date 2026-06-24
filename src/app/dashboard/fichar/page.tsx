@@ -30,20 +30,23 @@ export default async function FicharPage() {
     <main className="mx-auto max-w-3xl px-6 py-12">
       <header className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Fichar</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl text-navy">Fichar</h1>
+          <p className="mt-1 text-sm text-navy/60">
             {dentro} de {statuses.length}{" "}
-            {statuses.length === 1 ? "empleado" : "empleados"} dentro · {ahora}{" "}
-            (hora de España)
+            {statuses.length === 1 ? "empleado" : "empleados"} dentro ·{" "}
+            <span className="font-mono">{ahora}</span> (hora de España)
           </p>
         </div>
       </header>
 
       {statuses.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+        <div className="mt-8 rounded-xl border border-dashed border-navy/20 bg-white p-8 text-center text-sm text-navy/60">
           No hay empleados activos.{" "}
           {session.user.role === "OWNER" ? (
-            <Link href="/dashboard/empleados" className="font-medium underline">
+            <Link
+              href="/dashboard/empleados"
+              className="font-medium text-pulse underline"
+            >
               Da de alta a tu equipo
             </Link>
           ) : (
@@ -56,24 +59,22 @@ export default async function FicharPage() {
           {statuses.map((s) => (
             <li
               key={s.employee.id}
-              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4"
+              className="flex items-center justify-between rounded-xl border border-navy/10 bg-white p-4"
             >
               <div>
-                <p className="font-semibold text-slate-900">
-                  {s.employee.name}
-                </p>
+                <p className="font-semibold text-navy">{s.employee.name}</p>
                 <div className="mt-1 flex items-center gap-2 text-sm">
                   {s.isIn ? (
                     <>
-                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                      <span className="rounded-full bg-ficha/15 px-2 py-0.5 text-xs font-medium text-ficha">
                         Dentro
                       </span>
-                      <span className="text-slate-500">
+                      <span className="font-mono text-navy/50">
                         desde las {s.since ? formatMadridTime(s.since) : "—"}
                       </span>
                     </>
                   ) : (
-                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600">
+                    <span className="rounded-full bg-navy/10 px-2 py-0.5 text-xs font-medium text-navy/60">
                       Fuera
                     </span>
                   )}

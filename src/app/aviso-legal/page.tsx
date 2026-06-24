@@ -6,10 +6,10 @@ import { loadLegal } from "@/lib/legal";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Política de cookies · Fichalium",
-  description: "Información sobre el uso de cookies en Fichalium.",
+  title: "Aviso legal · Fichalium",
+  description: "Aviso legal de Fichalium (Dependalium Global Services S.L.).",
 };
 
-export default function CookiesPage() {
-  return <LegalShell>{renderMarkdown(loadLegal("cookies"))}</LegalShell>;
+export default function AvisoLegalPage() {
+  return <LegalShell>{renderMarkdown(loadLegal("aviso-legal"))}</LegalShell>;
 }

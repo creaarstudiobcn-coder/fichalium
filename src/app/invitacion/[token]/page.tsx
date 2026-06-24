@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getValidInvitation } from "@/lib/invitations";
+import { Brand } from "@/components/Brand";
 import { AceptarForm } from "./AceptarForm";
 
 export default async function InvitacionPage({
@@ -12,12 +13,15 @@ export default async function InvitacionPage({
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">Únete a tu equipo</h1>
+      <div className="mb-6 flex justify-center">
+        <Brand size={36} textClassName="text-2xl text-navy" />
+      </div>
+      <div className="rounded-2xl border border-navy/10 bg-white p-8 shadow-sm">
+        <h1 className="text-2xl text-navy">Únete a tu equipo</h1>
 
         {inv.state === "valid" ? (
           <>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-navy/60">
               Crea tu contraseña para empezar a fichar tu jornada.
             </p>
             <AceptarForm
@@ -37,7 +41,7 @@ export default async function InvitacionPage({
             </p>
             <Link
               href="/login"
-              className="block text-center text-sm font-medium text-slate-900 underline"
+              className="block text-center text-sm font-medium text-pulse hover:underline"
             >
               Ir a iniciar sesión
             </Link>

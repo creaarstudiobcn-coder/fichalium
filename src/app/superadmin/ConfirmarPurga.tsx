@@ -44,7 +44,7 @@ export function ConfirmarPurga({
           name="confirm"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          className="w-48 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+          className="w-48 rounded-lg border border-navy/15 px-2 py-1 text-xs"
           placeholder={name}
         />
         <button
@@ -60,7 +60,7 @@ export function ConfirmarPurga({
             setOpen(false);
             setConfirm("");
           }}
-          className="text-xs text-slate-500 underline"
+          className="text-xs text-navy/60 underline"
         >
           Cancelar
         </button>

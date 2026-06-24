@@ -19,7 +19,7 @@ export function InvitarEmpleado({
 
   if (accountStatus === "active") {
     return (
-      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+      <span className="rounded-full bg-ficha/15 px-2 py-0.5 text-xs font-medium text-ficha">
         Con cuenta
       </span>
     );
@@ -44,12 +44,12 @@ export function InvitarEmpleado({
           readOnly
           value={state.inviteUrl}
           onFocus={(e) => e.currentTarget.select()}
-          className="w-56 rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-600"
+          className="w-56 rounded-lg border border-navy/15 px-2 py-1 font-mono text-xs text-navy/70"
         />
         <button
           type="button"
           onClick={copy}
-          className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-slate-700"
+          className="rounded-lg bg-ficha px-3 py-1.5 text-xs font-semibold text-navy transition hover:bg-ficha/90"
         >
           {copied ? "Copiado" : "Copiar"}
         </button>
@@ -66,7 +66,7 @@ export function InvitarEmpleado({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-60"
+          className="rounded-lg border border-navy/15 px-3 py-1.5 text-xs font-medium text-navy/80 transition hover:bg-navy/5 disabled:opacity-60"
         >
           {pending ? "Generando…" : label}
         </button>
