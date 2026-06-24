@@ -31,3 +31,6 @@ npm-debug.log*
 
 # test
 /coverage
+
+# kit de marca (assets fuente, no forma parte del repo de la app)
+/Branding Fichalium/
