@@ -21,6 +21,9 @@ if (!APP_DB_PASSWORD) {
 // Helpers de expresión reutilizables.
 const TENANT = `current_setting('app.current_company', true)`;
 const BOOTSTRAP = `current_setting('app.bootstrap', true)`; // solo para login
+const INVITE_ACCEPT = `current_setting('app.invite_accept', true)`; // solo aceptar invitación
+const STRIPE_SYNC = `current_setting('app.stripe_sync', true)`; // solo webhook de Stripe
+const SUPERADMIN = `current_setting('app.superadmin', true)`; // solo panel superadmin (lectura global)
 const PURGE = `current_setting('app.allow_purge', true)`; // solo teardown / RGPD
 
 // ───────── Rol de aplicación dedicado, SIN BYPASSRLS ─────────
@@ -68,6 +71,12 @@ const statements = [
   `ALTER TABLE employees   FORCE  ROW LEVEL SECURITY`,
   `ALTER TABLE time_entries ENABLE ROW LEVEL SECURITY`,
   `ALTER TABLE time_entries FORCE  ROW LEVEL SECURITY`,
+  `ALTER TABLE invitations ENABLE ROW LEVEL SECURITY`,
+  `ALTER TABLE invitations FORCE  ROW LEVEL SECURITY`,
+  `ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY`,
+  `ALTER TABLE subscriptions FORCE  ROW LEVEL SECURITY`,
+  `ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY`,
+  `ALTER TABLE audit_logs FORCE  ROW LEVEL SECURITY`,
 
   // ───────────────────────── companies ─────────────────────────
   // El "tenant key" de companies es su propio id. Estricto: solo ves/escribes
@@ -76,6 +85,15 @@ const statements = [
   `CREATE POLICY companies_tenant ON companies
      USING (id = ${TENANT})
      WITH CHECK (id = ${TENANT})`,
+  // Superadmin: lectura global de metadatos de empresa + UPDATE de status
+  // (suspender/cerrar). Permisivas → se combinan en OR con la de tenant.
+  `DROP POLICY IF EXISTS companies_superadmin_select ON companies`,
+  `CREATE POLICY companies_superadmin_select ON companies FOR SELECT
+     USING (${SUPERADMIN} = 'on')`,
+  `DROP POLICY IF EXISTS companies_superadmin_update ON companies`,
+  `CREATE POLICY companies_superadmin_update ON companies FOR UPDATE
+     USING (${SUPERADMIN} = 'on')
+     WITH CHECK (${SUPERADMIN} = 'on')`,
 
   // ───────────────────────── users ─────────────────────────
   // SELECT: tu propia empresa, O durante el bootstrap de login (búsqueda por
@@ -102,6 +120,74 @@ const statements = [
   `CREATE POLICY time_entries_tenant ON time_entries
      USING (company_id = ${TENANT})
      WITH CHECK (company_id = ${TENANT})`,
+
+  // ───────────────────────── invitations ─────────────────────────
+  // SELECT: tu propia empresa, O durante la aceptación (app.invite_accept='on'),
+  // que es la búsqueda por token inevitablemente cross-tenant (aún no hay sesión,
+  // igual que el bootstrap de login pero acotado a esta tabla y solo lectura).
+  `DROP POLICY IF EXISTS invitations_select ON invitations`,
+  `CREATE POLICY invitations_select ON invitations FOR SELECT
+     USING (company_id = ${TENANT} OR ${INVITE_ACCEPT} = 'on')`,
+  // INSERT estricto: solo creas invitaciones en tu propia empresa (lo hace el OWNER).
+  `DROP POLICY IF EXISTS invitations_insert ON invitations`,
+  `CREATE POLICY invitations_insert ON invitations FOR INSERT
+     WITH CHECK (company_id = ${TENANT})`,
+  // UPDATE: marcar accepted_at (e invalidar pendientes). Solo dentro de tu empresa.
+  // En la aceptación, el contexto se fija a la empresa de la invitación antes de escribir.
+  `DROP POLICY IF EXISTS invitations_update ON invitations`,
+  `CREATE POLICY invitations_update ON invitations FOR UPDATE
+     USING (company_id = ${TENANT})
+     WITH CHECK (company_id = ${TENANT})`,
+
+  // ───────────────────────── subscriptions ─────────────────────────
+  // SELECT: tu propia empresa, O durante el webhook de Stripe (app.stripe_sync='on'),
+  // que resuelve la empresa por customer/subscription id sin sesión (no hay tenant
+  // todavía). Acotado y solo lectura, como bootstrap/invite_accept.
+  `DROP POLICY IF EXISTS subscriptions_select ON subscriptions`,
+  `CREATE POLICY subscriptions_select ON subscriptions FOR SELECT
+     USING (company_id = ${TENANT} OR ${STRIPE_SYNC} = 'on' OR ${SUPERADMIN} = 'on')`,
+  // INSERT/UPDATE estrictos: solo en tu propia empresa. El webhook fija el contexto
+  // a la empresa de la suscripción (withTenant) ANTES de escribir, así que pasa.
+  `DROP POLICY IF EXISTS subscriptions_insert ON subscriptions`,
+  `CREATE POLICY subscriptions_insert ON subscriptions FOR INSERT
+     WITH CHECK (company_id = ${TENANT})`,
+  `DROP POLICY IF EXISTS subscriptions_update ON subscriptions`,
+  `CREATE POLICY subscriptions_update ON subscriptions FOR UPDATE
+     USING (company_id = ${TENANT})
+     WITH CHECK (company_id = ${TENANT})`,
+
+  // ───────────────────────── audit_logs (solo superadmin) ─────────────────────────
+  `DROP POLICY IF EXISTS audit_logs_superadmin_select ON audit_logs`,
+  `CREATE POLICY audit_logs_superadmin_select ON audit_logs FOR SELECT
+     USING (${SUPERADMIN} = 'on')`,
+  `DROP POLICY IF EXISTS audit_logs_superadmin_insert ON audit_logs`,
+  `CREATE POLICY audit_logs_superadmin_insert ON audit_logs FOR INSERT
+     WITH CHECK (${SUPERADMIN} = 'on')`,
+
+  // ───────────────────────── conteos sin exponer PII (SECURITY DEFINER) ─────────────────────────
+  // Devuelve SOLO agregados por empresa. Corre como owner (BYPASSRLS), así que
+  // no hace falta abrir SELECT de filas de employees/users al superadmin. Exige
+  // el flag app.superadmin para no poder invocarse fuera de ese contexto.
+  `CREATE OR REPLACE FUNCTION superadmin_company_stats()
+     RETURNS TABLE(company_id text, employee_count bigint, active_employee_count bigint, user_count bigint)
+     LANGUAGE plpgsql
+     SECURITY DEFINER
+     SET search_path = public
+     AS $func$
+       BEGIN
+         IF (${SUPERADMIN} IS DISTINCT FROM 'on') THEN
+           RAISE EXCEPTION 'superadmin_company_stats: requiere contexto de superadmin';
+         END IF;
+         RETURN QUERY
+           SELECT c.id,
+                  (SELECT count(*) FROM employees e WHERE e.company_id = c.id),
+                  (SELECT count(*) FROM employees e WHERE e.company_id = c.id AND e.active),
+                  (SELECT count(*) FROM users u WHERE u.company_id = c.id)
+           FROM companies c;
+       END
+     $func$`,
+  `REVOKE ALL ON FUNCTION superadmin_company_stats() FROM PUBLIC`,
+  `GRANT EXECUTE ON FUNCTION superadmin_company_stats() TO app_user`,
 
   // ───────────────────────── APPEND-ONLY (trigger) ─────────────────────────
   // UPDATE: prohibido SIEMPRE. Una corrección es un INSERT nuevo, nunca un UPDATE.

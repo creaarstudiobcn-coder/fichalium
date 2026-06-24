@@ -42,3 +42,42 @@ export async function findUserForLogin(email: string) {
     return tx.user.findUnique({ where: { email } });
   });
 }
+
+/**
+ * Búsqueda de invitación por hash de token para la ACEPTACIÓN (alta de cuenta
+ * del empleado). Igual que el login, es legítimamente cross-tenant: aún no hay
+ * sesión, así que no conocemos la empresa hasta leer la invitación. Activa el
+ * flag acotado `app.invite_accept`, que SOLO abre la lectura de `invitations`
+ * (nunca users/employees/time_entries). No se usa en ningún otro sitio del
+ * runtime. Las escrituras posteriores van por `withTenant(companyId)`.
+ */
+export async function findInvitationByToken(tokenHash: string) {
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.invite_accept', 'on', true)`;
+    return tx.invitation.findUnique({ where: { tokenHash } });
+  });
+}
+
+/**
+ * Resuelve la empresa de una suscripción para el WEBHOOK de Stripe, que llega
+ * sin sesión (cross-tenant). Activa el flag acotado `app.stripe_sync`, que SOLO
+ * abre la lectura de `subscriptions`. Camino de respaldo: el webhook prioriza
+ * `metadata.companyId`/`client_reference_id`; esto cubre eventos que solo traen
+ * el customer/subscription id (p. ej. facturas). No se usa fuera del webhook.
+ */
+export async function findCompanyIdByStripe(args: {
+  customerId?: string;
+  subscriptionId?: string;
+}): Promise<string | null> {
+  if (!args.customerId && !args.subscriptionId) return null;
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.stripe_sync', 'on', true)`;
+    const sub = await tx.subscription.findFirst({
+      where: args.subscriptionId
+        ? { stripeSubscriptionId: args.subscriptionId }
+        : { stripeCustomerId: args.customerId },
+      select: { companyId: true },
+    });
+    return sub?.companyId ?? null;
+  });
+}

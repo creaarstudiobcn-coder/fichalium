@@ -37,3 +37,18 @@ export const employeeSchema = z.object({
 });
 
 export type EmployeeInput = z.infer<typeof employeeSchema>;
+
+export const inviteSchema = z.object({
+  employeeId: z.string().min(1, "Empleado no válido"),
+});
+
+export type InviteInput = z.infer<typeof inviteSchema>;
+
+export const acceptInvitationSchema = z.object({
+  password: z
+    .string()
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .max(100, "La contraseña es demasiado larga"),
+});
+
+export type AcceptInvitationInput = z.infer<typeof acceptInvitationSchema>;

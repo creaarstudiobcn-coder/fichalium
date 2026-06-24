@@ -16,6 +16,7 @@ enum Role {
   OWNER // quien registra la empresa
   ADMIN
   EMPLOYEE
+  SUPERADMIN // dueño de la plataforma; NUNCA se crea por registro, solo por script
 }
 
 enum TimeEntryType {
@@ -23,15 +24,26 @@ enum TimeEntryType {
   CLOCK_OUT
 }
 
-model Company {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+enum CompanyStatus {
+  ACTIVE
+  SUSPENDED // enforcement de plataforma: bloquea TODO el panel de la empresa
+  CLOSED // baja: suscripción cancelada; se conservan los datos
+}
 
-  users       User[]
-  employees   Employee[]
-  timeEntries TimeEntry[]
+model Company {
+  id               String        @id @default(cuid())
+  name             String
+  stripeCustomerId String?       @unique @map("stripe_customer_id")
+  status           CompanyStatus @default(ACTIVE)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  users        User[]
+  employees    Employee[]
+  timeEntries  TimeEntry[]
+  invitations  Invitation[]
+  subscription Subscription?
+  auditLogs    AuditLog[]
 
   @@map("companies")
 }
@@ -43,10 +55,14 @@ model User {
   name         String
   passwordHash String   @map("password_hash")
   role         Role     @default(EMPLOYEE)
+  // Cuenta de un EMPLOYEE enlazada a su ficha de empleado. NULL para OWNER/ADMIN
+  // (no tienen jornada propia). Único: un empleado tiene como mucho una cuenta.
+  employeeId   String?  @unique @map("employee_id")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   company        Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee       Employee?   @relation("EmployeeAccount", fields: [employeeId], references: [id], onDelete: SetNull)
   createdEntries TimeEntry[] @relation("EntryCreator")
 
   @@index([companyId])
@@ -61,12 +77,61 @@ model Employee {
   active    Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   timeEntries TimeEntry[]
+  account     User?        @relation("EmployeeAccount")
+  invitations Invitation[]
 
   // Email único DENTRO de la empresa (no global): el índice incluye company_id.
   @@unique([companyId, email])
   @@map("employees")
+}
+
+// Invitación para que un empleado cree su propia cuenta (rol EMPLOYEE) y fiche
+// él mismo. El token crudo solo viaja en la URL; aquí guardamos su SHA-256.
+// La cuenta (User) NO se crea hasta que el empleado acepta y fija contraseña.
+model Invitation {
+  id         String    @id @default(cuid())
+  companyId  String    @map("company_id")
+  employeeId String    @map("employee_id")
+  email      String
+  tokenHash  String    @unique @map("token_hash")
+  role       Role      @default(EMPLOYEE)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz
+  acceptedAt DateTime? @map("accepted_at") @db.Timestamptz
+  createdBy  String    @map("created_by")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([employeeId])
+  @@map("invitations")
+}
+
+// Suscripción de Stripe Billing de una empresa (1‑a‑1). El cobro es POR TRAMOS
+// automáticos: `quantity` = empleados activos y Stripe aplica el tramo. Stripe
+// es la fuente de verdad del cobro; aquí cacheamos el estado para gating y UI.
+// El webhook escribe vía withTenant(companyId); ver RLS (flag app.stripe_sync).
+model Subscription {
+  id                   String    @id @default(cuid())
+  companyId            String    @unique @map("company_id")
+  stripeCustomerId     String    @map("stripe_customer_id")
+  stripeSubscriptionId String    @unique @map("stripe_subscription_id")
+  stripeItemId         String    @map("stripe_item_id")
+  status               String // active, trialing, past_due, canceled, unpaid, incomplete…
+  priceId              String    @map("price_id")
+  quantity             Int       @default(0)
+  currentPeriodEnd     DateTime? @map("current_period_end") @db.Timestamptz
+  cancelAtPeriodEnd    Boolean   @default(false) @map("cancel_at_period_end")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("subscriptions")
 }
 
 // APPEND-ONLY. No se hace UPDATE ni DELETE jamás (garantizado por trigger en BD).
@@ -93,4 +158,23 @@ model TimeEntry {
   @@index([companyId, employeeId])
   @@index([correctsId])
   @@map("time_entries")
+}
+
+// Registro de acciones sensibles del superadmin (plataforma, no por tenant).
+// `targetCompanyId` es FK con SetNull para que el log SOBREVIVA a una purga de
+// la empresa; el nombre se guarda en `details` para no perder la referencia.
+model AuditLog {
+  id              String   @id @default(cuid())
+  actorUserId     String   @map("actor_user_id")
+  actorEmail      String   @map("actor_email")
+  action          String // SUSPEND, UNSUSPEND, CLOSE, PURGE
+  targetCompanyId String?  @map("target_company_id")
+  details         Json?
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  targetCompany Company? @relation(fields: [targetCompanyId], references: [id], onDelete: SetNull)
+
+  @@index([targetCompanyId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

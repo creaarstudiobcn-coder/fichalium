@@ -9,7 +9,18 @@ export default async function FicharPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const statuses = await listEmployeeStatuses(session.user.companyId);
+  // El EMPLOYEE solo se ve a sí mismo; OWNER/ADMIN ven a todo el equipo (híbrido).
+  // Un EMPLOYEE sin employeeId (no debería ocurrir) no ve a nadie: nunca a todos.
+  const isEmployee = session.user.role === "EMPLOYEE";
+  const statuses =
+    isEmployee && !session.user.employeeId
+      ? []
+      : await listEmployeeStatuses(
+          session.user.companyId,
+          isEmployee && session.user.employeeId
+            ? { onlyEmployeeId: session.user.employeeId }
+            : undefined,
+        );
   const dentro = statuses.filter((s) => s.isIn).length;
 
   // Hora actual mostrada en zona de España (los datos se guardan en UTC).

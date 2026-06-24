@@ -1,8 +1,12 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { listEmployees } from "@/lib/employees";
+import { listEmployeesWithAccountStatus } from "@/lib/employees";
+import { getSubscription } from "@/lib/billing/subscription";
+import { isActive } from "@/lib/billing/plans";
 import { formatMadrid } from "@/lib/datetime";
 import { NuevoEmpleadoForm } from "./NuevoEmpleadoForm";
+import { InvitarEmpleado } from "./InvitarEmpleado";
 import { setActiveAction } from "./actions";
 
 export default async function EmpleadosPage() {
@@ -21,7 +25,11 @@ export default async function EmpleadosPage() {
     );
   }
 
-  const employees = await listEmployees(session.user.companyId);
+  const [employees, sub] = await Promise.all([
+    listEmployeesWithAccountStatus(session.user.companyId),
+    getSubscription(session.user.companyId),
+  ]);
+  const subActive = isActive(sub?.status);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
@@ -30,6 +38,17 @@ export default async function EmpleadosPage() {
         Da de alta a tu equipo. Al desactivar, se conserva su histórico de
         fichajes.
       </p>
+
+      {!subActive && (
+        <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Tu suscripción no está activa. El alta e invitación de empleados están
+          bloqueadas (fichar e informes siguen disponibles).{" "}
+          <Link href="/dashboard/suscripcion" className="font-medium underline">
+            Gestionar suscripción
+          </Link>
+          .
+        </p>
+      )}
 
       <div className="mt-6">
         <NuevoEmpleadoForm />
@@ -42,6 +61,7 @@ export default async function EmpleadosPage() {
               <th className="px-4 py-3 font-medium">Nombre</th>
               <th className="px-4 py-3 font-medium">Email</th>
               <th className="px-4 py-3 font-medium">Estado</th>
+              <th className="px-4 py-3 font-medium">Cuenta</th>
               <th className="px-4 py-3 font-medium">Alta</th>
               <th className="px-4 py-3" />
             </tr>
@@ -49,7 +69,7 @@ export default async function EmpleadosPage() {
           <tbody className="divide-y divide-slate-100">
             {employees.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
                   Aún no hay empleados. Añade el primero arriba.
                 </td>
               </tr>
@@ -69,6 +89,16 @@ export default async function EmpleadosPage() {
                     <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600">
                       Desactivado
                     </span>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {e.active ? (
+                    <InvitarEmpleado
+                      employeeId={e.id}
+                      accountStatus={e.accountStatus}
+                    />
+                  ) : (
+                    <span className="text-xs text-slate-400">—</span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-slate-500">

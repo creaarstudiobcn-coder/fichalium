@@ -70,13 +70,24 @@ export type EmployeeStatus = {
   nextType: TimeEntryType;
 };
 
-/** Estado actual (dentro/fuera + desde cuándo) de cada empleado activo. */
+/**
+ * Estado actual (dentro/fuera + desde cuándo) de cada empleado activo.
+ *
+ * `onlyEmployeeId` acota la lista a un único empleado: lo usa la vista del
+ * EMPLOYEE logueado para verse solo a sí mismo. Sin él, devuelve todos (vista
+ * OWNER/ADMIN). La RLS garantiza el aislamiento POR EMPRESA; el filtro por
+ * empleado es la capa de "solo yo".
+ */
 export async function listEmployeeStatuses(
   companyId: string,
+  opts?: { onlyEmployeeId?: string },
 ): Promise<EmployeeStatus[]> {
   return withTenant(companyId, async (tx) => {
     const employees = await tx.employee.findMany({
-      where: { active: true },
+      where: {
+        active: true,
+        ...(opts?.onlyEmployeeId ? { id: opts.onlyEmployeeId } : {}),
+      },
       orderBy: { name: "asc" },
     });
 

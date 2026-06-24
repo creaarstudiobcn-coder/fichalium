@@ -13,7 +13,18 @@ export async function clockAction(
   const session = await auth();
   if (!session?.user) return { error: "Sesión no válida." };
 
-  const employeeId = String(formData.get("employeeId") ?? "");
+  // Un EMPLOYEE solo puede ficharse a SÍ MISMO: ignoramos el employeeId del
+  // formulario y usamos el de su sesión. OWNER/ADMIN sí pueden fichar por otros.
+  let employeeId: string;
+  if (session.user.role === "EMPLOYEE") {
+    if (!session.user.employeeId) {
+      return { error: "Tu cuenta no está vinculada a un empleado." };
+    }
+    employeeId = session.user.employeeId;
+  } else {
+    employeeId = String(formData.get("employeeId") ?? "");
+  }
+
   const type = String(formData.get("type") ?? "");
   if (type !== "CLOCK_IN" && type !== "CLOCK_OUT") {
     return { error: "Tipo de fichaje no válido." };

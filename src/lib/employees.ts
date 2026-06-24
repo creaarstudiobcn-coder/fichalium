@@ -16,6 +16,41 @@ export function listEmployees(companyId: string) {
   );
 }
 
+/** Estado de la cuenta de autoservicio de un empleado. */
+export type AccountStatus = "active" | "invited" | "none";
+
+/**
+ * Como `listEmployees`, pero anota el estado de cuenta de cada empleado:
+ * "active" (ya tiene User), "invited" (invitación pendiente y vigente) o "none".
+ * Lo usa la UI de gestión para decidir si ofrecer el botón de invitar.
+ */
+export async function listEmployeesWithAccountStatus(companyId: string) {
+  return withTenant(companyId, async (tx) => {
+    const employees = await tx.employee.findMany({
+      orderBy: [{ active: "desc" }, { name: "asc" }],
+    });
+    const accounts = await tx.user.findMany({
+      where: { employeeId: { not: null } },
+      select: { employeeId: true },
+    });
+    const withAccount = new Set(accounts.map((a) => a.employeeId));
+    const pending = await tx.invitation.findMany({
+      where: { acceptedAt: null, expiresAt: { gt: new Date() } },
+      select: { employeeId: true },
+    });
+    const invited = new Set(pending.map((p) => p.employeeId));
+
+    return employees.map((e) => ({
+      ...e,
+      accountStatus: (withAccount.has(e.id)
+        ? "active"
+        : invited.has(e.id)
+          ? "invited"
+          : "none") as AccountStatus,
+    }));
+  });
+}
+
 /** Crea un empleado. Email único dentro de la empresa (constraint compuesta). */
 export async function createEmployee(companyId: string, input: EmployeeInput) {
   try {
