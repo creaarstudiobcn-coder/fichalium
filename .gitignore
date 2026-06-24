@@ -21,7 +21,8 @@ npm-debug.log*
 
 # env files (¡NUNCA commitear secretos!)
 .env
-.env*.local
+.env.*
+!.env.example
 
 # vercel
 .vercel
