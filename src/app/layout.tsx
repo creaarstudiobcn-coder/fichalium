@@ -19,6 +19,7 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.fichalium.es"),
   title: "Fichalium · Control horario",
   description:
     "Fichalium: registro de jornada laboral para empresas en España. Cada empresa, sus datos aislados.",

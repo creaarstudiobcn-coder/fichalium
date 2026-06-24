@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "title": "Fichalium · Control horari i registre de jornada per a empreses",
+    "description": "Registra la jornada laboral de la teva empresa de manera senzilla i conforme a la llei. Control de presència i fitxatge sense biometria. Prova 14 dies gratis."
+  },
+  "banner": {
+    "main": "14 dies de prova gratis",
+    "sub": "Sense compromís. Cancel·la quan vulguis."
+  },
+  "header": {
+    "login": "Iniciar sessió"
+  },
+  "hero": {
+    "pill": "Control horari",
+    "title": "Fitxatge senzill i conforme a la llei",
+    "subtitle": "Fichalium registra la jornada de la teva empresa amb cada client i les seves dades aïllades. Sense biometria, sense complicacions.",
+    "ctaPrimary": "Crear compte d'empresa",
+    "ctaSecondary": "Iniciar sessió"
+  },
+  "footer": {
+    "copyright": "© {year} Dependalium Global Services S.L.",
+    "links": {
+      "legal": "Avís legal",
+      "privacy": "Privacitat",
+      "cookies": "Cookies",
+      "terms": "Condicions"
+    }
+  },
+  "langSwitcher": {
+    "label": "Idioma",
+    "es": "Español",
+    "ca": "Català"
+  }
+}

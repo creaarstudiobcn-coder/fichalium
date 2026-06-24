@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "title": "Fichalium · Control horario",
+    "description": "Fichalium: registro de jornada laboral para empresas en España. Cada empresa, sus datos aislados."
+  },
+  "banner": {
+    "main": "14 días de prueba gratis",
+    "sub": "Sin compromiso. Cancela cuando quieras."
+  },
+  "header": {
+    "login": "Iniciar sesión"
+  },
+  "hero": {
+    "pill": "Control horario",
+    "title": "Fichaje sencillo y conforme a la ley",
+    "subtitle": "Fichalium registra la jornada de tu empresa con cada cliente y sus datos aislados. Sin biometría, sin complicaciones.",
+    "ctaPrimary": "Crear cuenta de empresa",
+    "ctaSecondary": "Iniciar sesión"
+  },
+  "footer": {
+    "copyright": "© {year} Dependalium Global Services S.L.",
+    "links": {
+      "legal": "Aviso legal",
+      "privacy": "Privacidad",
+      "cookies": "Cookies",
+      "terms": "Términos"
+    }
+  },
+  "langSwitcher": {
+    "label": "Idioma",
+    "es": "Español",
+    "ca": "Català"
+  }
+}
