@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { getCompanyStatus, canManage } from "@/lib/access";
 import { listEmployeesWithAccountStatus } from "@/lib/employees";
 import { getSubscription } from "@/lib/billing/subscription";
 import { isActive } from "@/lib/billing/plans";
@@ -12,6 +13,11 @@ import { setActiveAction } from "./actions";
 export default async function EmpleadosPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+
+  // Empresa suspendida/de baja: sin gestión (el aviso lo pinta el layout).
+  if (!canManage(await getCompanyStatus(session.user.companyId))) {
+    redirect("/dashboard/informes");
+  }
 
   // Gestión de empleados: solo OWNER.
   if (session.user.role !== "OWNER") {

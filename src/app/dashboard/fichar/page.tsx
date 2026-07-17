@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { getCompanyStatus, canManage } from "@/lib/access";
 import { listEmployeeStatuses } from "@/lib/fichajes";
 import { formatMadridTime, formatMadrid } from "@/lib/datetime";
 import { FicharButton } from "./FicharButton";
@@ -8,6 +9,12 @@ import { FicharButton } from "./FicharButton";
 export default async function FicharPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+
+  // Empresa suspendida/de baja: no se admiten fichajes nuevos (son append-only:
+  // lo que entre aquí no se puede deshacer).
+  if (!canManage(await getCompanyStatus(session.user.companyId))) {
+    redirect("/dashboard/informes");
+  }
 
   // El EMPLOYEE solo se ve a sí mismo; OWNER/ADMIN ven a todo el equipo (híbrido).
   // Un EMPLOYEE sin employeeId (no debería ocurrir) no ve a nadie: nunca a todos.

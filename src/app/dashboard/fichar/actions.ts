@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
+import { getCompanyStatus, canManage, blockedMessage } from "@/lib/access";
 import { clock, FichajeError } from "@/lib/fichajes";
 
 export type ClockState = { error?: string; ok?: boolean };
@@ -12,6 +13,11 @@ export async function clockAction(
 ): Promise<ClockState> {
   const session = await auth();
   if (!session?.user) return { error: "Sesión no válida." };
+
+  // Las acciones NO pasan por dashboard/layout.tsx: el estado se comprueba aquí
+  // o no se comprueba. Un fichaje es append-only; si entra, no se puede borrar.
+  const status = await getCompanyStatus(session.user.companyId);
+  if (!canManage(status)) return { error: blockedMessage(status) };
 
   // Un EMPLOYEE solo puede ficharse a SÍ MISMO: ignoramos el employeeId del
   // formulario y usamos el de su sesión. OWNER/ADMIN sí pueden fichar por otros.

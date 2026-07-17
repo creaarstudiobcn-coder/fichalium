@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import type { Session } from "next-auth";
 import { auth } from "@/auth";
+import { getCompanyStatus, canManage, blockedMessage } from "@/lib/access";
 import { employeeSchema, inviteSchema } from "@/lib/validation";
 import {
   createEmployee,
@@ -18,12 +20,28 @@ export type ActionState = { error?: string; ok?: boolean };
 const NEEDS_SUB =
   "Necesitas una suscripción activa para gestionar empleados. Ve a Suscripción.";
 
-/** Solo el OWNER gestiona empleados. */
-async function ownerSession() {
+type Gate =
+  | { ok: true; user: Session["user"] }
+  | { ok: false; error: string };
+
+/**
+ * Solo el OWNER gestiona empleados, y solo si la empresa está ACTIVE.
+ *
+ * El estado se comprueba AQUÍ porque las server actions no pasan por
+ * `dashboard/layout.tsx`. Es distinto de `hasActiveSubscription`: una empresa
+ * suspendida por la plataforma puede tener la suscripción al día, y al revés.
+ * Devuelve el motivo real para no decirle "no eres el propietario" a un
+ * propietario cuya empresa está suspendida.
+ */
+async function ownerGate(): Promise<Gate> {
   const session = await auth();
-  if (!session?.user) return null;
-  if (session.user.role !== "OWNER") return null;
-  return session.user;
+  if (!session?.user) return { ok: false, error: "Sesión no válida." };
+  if (session.user.role !== "OWNER") {
+    return { ok: false, error: "Solo el propietario puede gestionar empleados." };
+  }
+  const status = await getCompanyStatus(session.user.companyId);
+  if (!canManage(status)) return { ok: false, error: blockedMessage(status) };
+  return { ok: true, user: session.user };
 }
 
 /** ¿La empresa tiene la suscripción activa/en prueba? (gating de admin). */
@@ -36,10 +54,9 @@ export async function createEmployeeAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const user = await ownerSession();
-  if (!user) {
-    return { error: "Solo el propietario puede gestionar empleados." };
-  }
+  const gate = await ownerGate();
+  if (!gate.ok) return { error: gate.error };
+  const user = gate.user;
   if (!(await hasActiveSubscription(user.companyId))) {
     return { error: NEEDS_SUB };
   }
@@ -72,10 +89,9 @@ export async function createInvitationAction(
   _prev: InviteState,
   formData: FormData,
 ): Promise<InviteState> {
-  const user = await ownerSession();
-  if (!user) {
-    return { error: "Solo el propietario puede invitar empleados." };
-  }
+  const gate = await ownerGate();
+  if (!gate.ok) return { error: gate.error };
+  const user = gate.user;
   if (!(await hasActiveSubscription(user.companyId))) {
     return { error: NEEDS_SUB };
   }
@@ -111,8 +127,9 @@ export async function createInvitationAction(
 
 /** Activar/desactivar (form simple, sin estado). */
 export async function setActiveAction(formData: FormData) {
-  const user = await ownerSession();
-  if (!user) return;
+  const gate = await ownerGate();
+  if (!gate.ok) return;
+  const user = gate.user;
 
   const employeeId = String(formData.get("employeeId") ?? "");
   const active = formData.get("active") === "true";

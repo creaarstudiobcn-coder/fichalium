@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { getCompanyStatus, canManage } from "@/lib/access";
 import { withTenant } from "@/lib/tenant";
 import { formatMadrid, formatMadridTime, formatDuration } from "@/lib/datetime";
 import { listEmployeeStatuses } from "@/lib/fichajes";
@@ -15,6 +16,11 @@ export default async function DashboardPage() {
 
   const { companyId, role, name, email } = session.user;
   const isOwner = role === "OWNER";
+
+  // Empresa suspendida/de baja: sin gestión. Solo le quedan sus informes.
+  if (!canManage(await getCompanyStatus(companyId))) {
+    redirect("/dashboard/informes");
+  }
 
   // Toda query con datos de cliente pasa por withTenant → RLS filtra por company.
   const [company, statuses, todayHours] = await Promise.all([

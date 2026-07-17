@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
-import { withTenant } from "@/lib/tenant";
+import { getCompanyStatus, canManage, blockedMessage } from "@/lib/access";
 import { Brand } from "@/components/Brand";
 
 async function SignOutButton({ label }: { label: string }) {
@@ -28,34 +28,12 @@ export default async function DashboardLayout({
   if (!session?.user) redirect("/login");
   const isOwner = session.user.role === "OWNER";
 
-  // Estado de la empresa (suspensión/baja por la plataforma). Se comprueba en
-  // vivo cada request: si no está ACTIVE, se bloquea TODO el panel.
-  const company = await withTenant(session.user.companyId, (tx) =>
-    tx.company.findUnique({
-      where: { id: session.user.companyId },
-      select: { status: true },
-    }),
-  );
-  if (company && company.status !== "ACTIVE") {
-    const closed = company.status === "CLOSED";
-    return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 text-center">
-        <div className="rounded-2xl border border-navy/10 bg-white p-8 shadow-sm">
-          <h1 className="text-xl text-navy">
-            {closed ? "Cuenta dada de baja" : "Cuenta suspendida"}
-          </h1>
-          <p className="mt-2 text-sm text-navy/60">
-            {closed
-              ? "Esta empresa ha sido dada de baja. Contacta con soporte si crees que es un error."
-              : "El acceso a esta empresa está suspendido temporalmente. Contacta con soporte."}
-          </p>
-          <div className="mt-6 flex justify-center">
-            <SignOutButton label="Cerrar sesión" />
-          </div>
-        </div>
-      </main>
-    );
-  }
+  // Estado de plataforma, en vivo cada request. Este layout AVISA y esconde lo
+  // que no se puede usar, pero NO es el control de acceso: los layouts no se
+  // ejecutan para route handlers ni server actions, así que cada página, acción
+  // y handler re-verifica por su cuenta (ver src/lib/access.ts).
+  const status = await getCompanyStatus(session.user.companyId);
+  const manage = canManage(status);
 
   return (
     <div className="min-h-screen">
@@ -69,11 +47,15 @@ export default async function DashboardLayout({
           <span className="hidden h-5 w-px shrink-0 bg-navy/10 md:inline-block" />
           {/* Tira de enlaces: scroll horizontal propio en móvil, nunca de página. */}
           <div className="no-scrollbar flex flex-1 items-center gap-1 overflow-x-auto whitespace-nowrap">
-            <NavLink href="/dashboard">Panel</NavLink>
-            <NavLink href="/dashboard/fichar">Fichar</NavLink>
+            {/* Sin gestión solo quedan los informes: el registro horario es una
+                obligación legal del cliente y nunca se le retira. */}
+            {manage && <NavLink href="/dashboard">Panel</NavLink>}
+            {manage && <NavLink href="/dashboard/fichar">Fichar</NavLink>}
             <NavLink href="/dashboard/informes">Informes</NavLink>
-            {isOwner && <NavLink href="/dashboard/empleados">Empleados</NavLink>}
-            {isOwner && (
+            {manage && isOwner && (
+              <NavLink href="/dashboard/empleados">Empleados</NavLink>
+            )}
+            {manage && isOwner && (
               <NavLink href="/dashboard/suscripcion">Suscripción</NavLink>
             )}
           </div>
@@ -82,6 +64,18 @@ export default async function DashboardLayout({
           </div>
         </div>
       </nav>
+
+      {!manage && (
+        <div className="border-b border-amber-200 bg-amber-50">
+          <p className="mx-auto max-w-4xl px-4 py-3 text-sm text-amber-900 sm:px-6">
+            <strong>
+              {status === "CLOSED" ? "Cuenta dada de baja." : "Cuenta suspendida."}
+            </strong>{" "}
+            {blockedMessage(status)}
+          </p>
+        </div>
+      )}
+
       {children}
     </div>
   );

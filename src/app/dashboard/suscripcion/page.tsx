@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { getCompanyStatus, canManage } from "@/lib/access";
 import { withTenant } from "@/lib/tenant";
 import { getSubscription } from "@/lib/billing/subscription";
 import { isActive, tramoFor, TRAMOS } from "@/lib/billing/plans";
@@ -21,6 +22,11 @@ const STATUS_LABEL: Record<string, string> = {
 export default async function SuscripcionPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+
+  // Empresa suspendida/de baja: sin gestión (el aviso lo pinta el layout).
+  if (!canManage(await getCompanyStatus(session.user.companyId))) {
+    redirect("/dashboard/informes");
+  }
 
   if (session.user.role !== "OWNER") {
     return (

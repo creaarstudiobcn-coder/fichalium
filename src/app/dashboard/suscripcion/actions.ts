@@ -2,16 +2,21 @@
 
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { getCompanyStatus, canManage } from "@/lib/access";
 import { withTenant } from "@/lib/tenant";
 import { getStripe } from "@/lib/billing/stripe";
 import { PRICE_ID, TRIAL_DAYS } from "@/lib/billing/plans";
 
 const baseUrl = () => process.env.AUTH_URL ?? "http://localhost:3000";
 
-/** Solo el OWNER gestiona la suscripción de la empresa. */
+/**
+ * Solo el OWNER gestiona la suscripción, y solo si la empresa está ACTIVE.
+ * El estado se comprueba aquí: las server actions no pasan por el layout.
+ */
 async function ownerSession() {
   const session = await auth();
   if (!session?.user || session.user.role !== "OWNER") return null;
+  if (!canManage(await getCompanyStatus(session.user.companyId))) return null;
   return session.user;
 }
 
