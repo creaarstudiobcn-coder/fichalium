@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { listEmployees } from "@/lib/employees";
-import { getReport, parseReportFilters } from "@/lib/reports";
+import {
+  getReport,
+  parseReportFilters,
+  scopeReportToViewer,
+} from "@/lib/reports";
 import {
   formatMadrid,
   formatMadridDate,
@@ -21,11 +25,17 @@ export default async function InformesPage({
   if (!session?.user) redirect("/login");
 
   const params = await searchParams;
-  const filters = parseReportFilters(params);
+  // El EMPLOYEE solo ve SU jornada: el alcance sale de la sesión, no de la URL.
+  const isEmployee = session.user.role === "EMPLOYEE";
+  const scope = scopeReportToViewer(parseReportFilters(params), session.user);
+  const filters = scope ?? {};
 
   const [employees, report] = await Promise.all([
-    listEmployees(session.user.companyId),
-    getReport(session.user.companyId, filters),
+    // El selector de compañeros solo tiene sentido para quien puede verlos.
+    isEmployee ? Promise.resolve([]) : listEmployees(session.user.companyId),
+    scope
+      ? getReport(session.user.companyId, scope)
+      : Promise.resolve({ entries: [], dailyHours: [] }),
   ]);
 
   // Query string para los enlaces de exportación (mismos filtros aplicados).
@@ -45,8 +55,9 @@ export default async function InformesPage({
             Informes e historial
           </h1>
           <p className="mt-1 text-sm text-navy/60">
-            Historial de fichajes de la empresa, con horas trabajadas por día.
-            Listo para presentar a la Inspección de Trabajo.
+            {isEmployee
+              ? "Tu historial de fichajes, con tus horas trabajadas por día."
+              : "Historial de fichajes de la empresa, con horas trabajadas por día. Listo para presentar a la Inspección de Trabajo."}
           </p>
         </div>
         <div className="flex gap-2">
@@ -70,22 +81,25 @@ export default async function InformesPage({
         method="get"
         className="mt-8 flex flex-col flex-wrap gap-4 rounded-xl border border-navy/10 bg-white p-4 sm:flex-row sm:items-end"
       >
-        <label className="flex w-full flex-col gap-1 text-sm sm:w-auto">
-          <span className="font-medium text-navy/70">Empleado</span>
-          <select
-            name="employeeId"
-            defaultValue={filters.employeeId ?? ""}
-            className="w-full rounded-lg border border-navy/15 px-3 py-2 text-sm sm:w-auto"
-          >
-            <option value="">Todos los empleados</option>
-            {employees.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.name}
-                {e.active ? "" : " (inactivo)"}
-              </option>
-            ))}
-          </select>
-        </label>
+        {/* Filtrar por compañero no se ofrece al EMPLOYEE: solo se ve a sí mismo. */}
+        {!isEmployee && (
+          <label className="flex w-full flex-col gap-1 text-sm sm:w-auto">
+            <span className="font-medium text-navy/70">Empleado</span>
+            <select
+              name="employeeId"
+              defaultValue={filters.employeeId ?? ""}
+              className="w-full rounded-lg border border-navy/15 px-3 py-2 text-sm sm:w-auto"
+            >
+              <option value="">Todos los empleados</option>
+              {employees.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                  {e.active ? "" : " (inactivo)"}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="flex w-full flex-col gap-1 text-sm sm:w-auto">
           <span className="font-medium text-navy/70">Desde</span>
           <input
@@ -110,7 +124,9 @@ export default async function InformesPage({
         >
           Filtrar
         </button>
-        {(filters.employeeId || filters.from || filters.to) && (
+        {/* Al EMPLOYEE su propio employeeId le viene siempre impuesto: no cuenta
+            como filtro que se pueda limpiar. */}
+        {((!isEmployee && filters.employeeId) || filters.from || filters.to) && (
           <a
             href="/dashboard/informes"
             className="rounded-lg px-3 py-2 text-center text-sm font-medium text-pulse underline-offset-2 hover:underline"

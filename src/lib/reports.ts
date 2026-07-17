@@ -33,6 +33,36 @@ export function parseReportFilters(
   };
 }
 
+/** Lo mínimo de la sesión que decide el alcance de un informe. */
+export type ReportViewer = {
+  role: string;
+  employeeId?: string | null;
+};
+
+/** `null` = este usuario no puede ver ningún informe (nunca "todos"). */
+export type ReportScope = ReportFilters | null;
+
+/**
+ * Acota los filtros de informe al alcance que permite la sesión.
+ *
+ * Un EMPLOYEE solo puede ver SU jornada: el `employeeId` que venga de la URL se
+ * ignora y se sustituye por el de la sesión. Sin él (no debería ocurrir) no ve
+ * nada — fail-closed, nunca "todos", igual que en `fichar/page.tsx`.
+ *
+ * OJO: los informes son datos personales de terceros. Este acotado NO lo hace la
+ * RLS (que aísla por empresa, no por empleado), así que TODO camino que llame a
+ * `getReport` — página, route handler o acción — debe pasar por aquí. En App
+ * Router los layouts no protegen a los route handlers.
+ */
+export function scopeReportToViewer(
+  filters: ReportFilters,
+  viewer: ReportViewer,
+): ReportScope {
+  if (viewer.role !== "EMPLOYEE") return filters;
+  if (!viewer.employeeId) return null;
+  return { ...filters, employeeId: viewer.employeeId };
+}
+
 /** Una fila del historial, ya resuelta con el nombre del empleado. */
 export type ReportEntry = {
   id: string;

@@ -3,7 +3,11 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { auth } from "@/auth";
 import { withTenant } from "@/lib/tenant";
 import { listEmployees } from "@/lib/employees";
-import { getReport, parseReportFilters } from "@/lib/reports";
+import {
+  getReport,
+  parseReportFilters,
+  scopeReportToViewer,
+} from "@/lib/reports";
 import { formatMadrid, formatMadridDate } from "@/lib/datetime";
 import { buildInformePdf } from "./InformePdf";
 
@@ -31,7 +35,19 @@ export async function GET(req: NextRequest) {
   const { companyId } = session.user;
 
   const params = Object.fromEntries(req.nextUrl.searchParams);
-  const filters = parseReportFilters(params);
+  // NO se comprueba el estado de la empresa A PROPÓSITO: una empresa suspendida
+  // o de baja conserva el acceso a su registro horario. Lo exige la cláusula 5
+  // de los Términos y el RD 8/2019 (conservación 4 años + entrega a Inspección).
+  // Lo que se bloquea es la GESTIÓN, no los datos. Ver src/lib/access.ts.
+  //
+  // Este handler NO pasa por dashboard/layout.tsx (en App Router los layouts no
+  // corren para route handlers), así que el alcance se re-verifica aquí: un
+  // EMPLOYEE solo exporta SU jornada, ignorando el employeeId de la URL.
+  const scope = scopeReportToViewer(parseReportFilters(params), session.user);
+  if (!scope) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  }
+  const filters = scope;
   const format = params.format === "csv" ? "csv" : "pdf";
 
   // Nombre de empresa + del empleado filtrado (todo dentro del tenant).

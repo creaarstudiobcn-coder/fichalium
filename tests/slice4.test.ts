@@ -5,6 +5,7 @@ import { registerCompany } from "@/lib/auth/register";
 import {
   computeDailyHours,
   getReport,
+  scopeReportToViewer,
   type PairableEntry,
 } from "@/lib/reports";
 import { madridDayKey } from "@/lib/datetime";
@@ -14,6 +15,43 @@ import { hasDb, purgeTenant } from "./helpers";
 // 1) CÁLCULO DE HORAS — función pura, sin BD (siempre se ejecuta).
 //    Garantiza que el emparejado entrada→salida y la suma por día son correctos.
 // ─────────────────────────────────────────────────────────────────────────
+// Alcance por rol: un informe lleva datos personales de TODA la plantilla, y la
+// RLS no protege de esto (aísla por empresa, no por empleado). Lógica pura →
+// corre siempre, también sin BD.
+describe("SLICE 4 — alcance del informe por rol", () => {
+  const FILTROS = { from: "2026-01-01", to: "2026-01-31" };
+
+  it("un EMPLOYEE queda acotado a su propia jornada", () => {
+    const scope = scopeReportToViewer(FILTROS, {
+      role: "EMPLOYEE",
+      employeeId: "emp-1",
+    });
+    expect(scope).toEqual({ ...FILTROS, employeeId: "emp-1" });
+  });
+
+  it("un EMPLOYEE no puede espiar a un compañero por la URL", () => {
+    // ?employeeId=<compañero> es exactamente el ataque: se ignora.
+    const scope = scopeReportToViewer(
+      { employeeId: "compañero-2" },
+      { role: "EMPLOYEE", employeeId: "emp-1" },
+    );
+    expect(scope?.employeeId).toBe("emp-1");
+  });
+
+  it("un EMPLOYEE sin employeeId no ve NADA (nunca 'todos')", () => {
+    // Fail-closed: el caso raro no puede degradar a ver la plantilla entera.
+    expect(scopeReportToViewer({}, { role: "EMPLOYEE", employeeId: null })).toBeNull();
+    expect(scopeReportToViewer({}, { role: "EMPLOYEE" })).toBeNull();
+  });
+
+  it("OWNER y ADMIN conservan la vista de toda la empresa", () => {
+    expect(scopeReportToViewer({}, { role: "OWNER" })).toEqual({});
+    expect(
+      scopeReportToViewer({ employeeId: "emp-9" }, { role: "ADMIN" }),
+    ).toEqual({ employeeId: "emp-9" });
+  });
+});
+
 describe("SLICE 4 — computeDailyHours (emparejado puro)", () => {
   const emp = (
     type: "CLOCK_IN" | "CLOCK_OUT",
