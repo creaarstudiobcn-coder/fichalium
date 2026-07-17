@@ -168,8 +168,13 @@ const statements = [
   // Devuelve SOLO agregados por empresa. Corre como owner (BYPASSRLS), así que
   // no hace falta abrir SELECT de filas de employees/users al superadmin. Exige
   // el flag app.superadmin para no poder invocarse fuera de ese contexto.
+  // DROP previo: Postgres no permite cambiar el tipo de retorno con CREATE OR
+  // REPLACE, así que al ampliar las columnas hay que soltarla antes (idempotente).
+  `DROP FUNCTION IF EXISTS superadmin_company_stats()`,
   `CREATE OR REPLACE FUNCTION superadmin_company_stats()
-     RETURNS TABLE(company_id text, employee_count bigint, active_employee_count bigint, user_count bigint)
+     RETURNS TABLE(company_id text, employee_count bigint, active_employee_count bigint, user_count bigint,
+                   time_entry_count bigint, last_entry_at timestamptz, pending_invitations bigint,
+                   owner_email text)
      LANGUAGE plpgsql
      SECURITY DEFINER
      SET search_path = public
@@ -182,12 +187,51 @@ const statements = [
            SELECT c.id,
                   (SELECT count(*) FROM employees e WHERE e.company_id = c.id),
                   (SELECT count(*) FROM employees e WHERE e.company_id = c.id AND e.active),
-                  (SELECT count(*) FROM users u WHERE u.company_id = c.id)
+                  (SELECT count(*) FROM users u WHERE u.company_id = c.id),
+                  -- Volumen y última actividad: agregados, nunca filas de fichaje.
+                  (SELECT count(*) FROM time_entries t WHERE t.company_id = c.id),
+                  (SELECT max(t.timestamp) FROM time_entries t WHERE t.company_id = c.id),
+                  (SELECT count(*) FROM invitations i
+                    WHERE i.company_id = c.id AND i.accepted_at IS NULL AND i.expires_at > now()),
+                  -- Contacto contractual del cliente (OWNER), no datos de sus empleados.
+                  (SELECT u.email FROM users u
+                    WHERE u.company_id = c.id AND u.role = 'OWNER'
+                    ORDER BY u.created_at LIMIT 1)
            FROM companies c;
        END
      $func$`,
   `REVOKE ALL ON FUNCTION superadmin_company_stats() FROM PUBLIC`,
   `GRANT EXECUTE ON FUNCTION superadmin_company_stats() TO app_user`,
+
+  // ───────────────────────── deriva de facturación (SECURITY DEFINER) ─────────────────────────
+  // Compara los empleados activos REALES con el `quantity` cacheado de la
+  // suscripción. Si no cuadran, se está facturando de menos o de más. Devuelve
+  // solo agregados por empresa; el panel lo muestra como alerta.
+  `DROP FUNCTION IF EXISTS superadmin_billing_drift()`,
+  `CREATE OR REPLACE FUNCTION superadmin_billing_drift()
+     RETURNS TABLE(company_id text, company_name text, sub_status text,
+                   billed_quantity int, actual_active bigint)
+     LANGUAGE plpgsql
+     SECURITY DEFINER
+     SET search_path = public
+     AS $func$
+       BEGIN
+         IF (${SUPERADMIN} IS DISTINCT FROM 'on') THEN
+           RAISE EXCEPTION 'superadmin_billing_drift: requiere contexto de superadmin';
+         END IF;
+         RETURN QUERY
+           SELECT c.id, c.name, s.status, s.quantity,
+                  (SELECT count(*) FROM employees e
+                    WHERE e.company_id = c.id AND e.active)
+           FROM companies c
+           JOIN subscriptions s ON s.company_id = c.id
+           WHERE s.quantity IS DISTINCT FROM
+                 (SELECT count(*)::int FROM employees e
+                   WHERE e.company_id = c.id AND e.active);
+       END
+     $func$`,
+  `REVOKE ALL ON FUNCTION superadmin_billing_drift() FROM PUBLIC`,
+  `GRANT EXECUTE ON FUNCTION superadmin_billing_drift() TO app_user`,
 
   // ───────────────────────── APPEND-ONLY (trigger) ─────────────────────────
   // UPDATE: prohibido SIEMPRE. Una corrección es un INSERT nuevo, nunca un UPDATE.

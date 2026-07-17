@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/billing/stripe";
-import { tramoFor, isActive } from "@/lib/billing/plans";
+import { tramoFor, mrrEurFor } from "@/lib/billing/plans";
 import { withSuperadmin } from "./db";
 import type { SuperadminActor } from "./guard";
 
@@ -45,7 +45,24 @@ type StatsRow = {
   employee_count: bigint;
   active_employee_count: bigint;
   user_count: bigint;
+  time_entry_count: bigint;
+  last_entry_at: Date | null;
+  pending_invitations: bigint;
+  owner_email: string | null;
 };
+
+/** Aplana una fila de `superadmin_company_stats()` (bigint → number). */
+function statsOf(s: StatsRow | undefined) {
+  return {
+    employeeCount: Number(s?.employee_count ?? 0),
+    activeEmployeeCount: Number(s?.active_employee_count ?? 0),
+    userCount: Number(s?.user_count ?? 0),
+    timeEntryCount: Number(s?.time_entry_count ?? 0),
+    lastEntryAt: s?.last_entry_at ?? null,
+    pendingInvitations: Number(s?.pending_invitations ?? 0),
+    ownerEmail: s?.owner_email ?? null,
+  };
+}
 
 /** Lista todas las empresas con estado, su suscripción y conteos agregados. */
 export async function listCompanies() {
@@ -75,37 +92,142 @@ export async function listCompanies() {
       await tx.$queryRaw<StatsRow[]>`SELECT * FROM superadmin_company_stats()`;
     const byId = new Map(stats.map((s) => [s.company_id, s]));
 
-    return companies.map((c) => {
-      const s = byId.get(c.id);
-      return {
-        ...c,
-        employeeCount: Number(s?.employee_count ?? 0),
-        activeEmployeeCount: Number(s?.active_employee_count ?? 0),
-        userCount: Number(s?.user_count ?? 0),
-      };
-    });
+    return companies.map((c) => ({
+      ...c,
+      ...statsOf(byId.get(c.id)),
+      mrrEur: mrrEurFor(c.subscription?.status, c.subscription?.quantity ?? 0),
+    }));
   });
 }
 
-/** Métricas de plataforma. El MRR es ESTIMADO (tramo × subs activas). */
+/** Ficha de UNA empresa: metadatos, suscripción y agregados. Sin PII de empleados. */
+export async function getCompanyDetail(companyId: string) {
+  const base = stripeDashboardBase();
+  return withSuperadmin(async (tx) => {
+    const company = await tx.company.findUnique({
+      where: { id: companyId },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        createdAt: true,
+        stripeCustomerId: true,
+        subscription: true,
+      },
+    });
+    if (!company) return null;
+
+    const stats =
+      await tx.$queryRaw<StatsRow[]>`SELECT * FROM superadmin_company_stats()`;
+    const s = stats.find((r) => r.company_id === companyId);
+
+    const audit = await tx.auditLog.findMany({
+      where: { targetCompanyId: companyId },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+
+    const sub = company.subscription;
+    return {
+      ...company,
+      ...statsOf(s),
+      mrrEur: mrrEurFor(sub?.status, sub?.quantity ?? 0),
+      tramoLabel: sub ? tramoFor(sub.quantity).label : null,
+      customerUrl: company.stripeCustomerId
+        ? `${base}/customers/${company.stripeCustomerId}`
+        : null,
+      subscriptionUrl: sub ? `${base}/subscriptions/${sub.stripeSubscriptionId}` : null,
+      audit,
+    };
+  });
+}
+
+/** Log de auditoría de plataforma (acciones del superadmin). */
+export async function listAuditLog(limit = 200) {
+  return withSuperadmin((tx) =>
+    tx.auditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: { targetCompany: { select: { name: true } } },
+    }),
+  );
+}
+
+type DriftRow = {
+  company_id: string;
+  company_name: string;
+  sub_status: string;
+  billed_quantity: number;
+  actual_active: bigint;
+};
+
+/**
+ * Empresas cuya suscripción factura un número de empleados distinto del real.
+ *
+ * No es una alerta teórica: si el PATCH a Stripe de `syncQuantity` falla, Stripe
+ * no cambia nada y por tanto NO emite webhook, así que nada reconcilia solo. Cada
+ * fila aquí es dinero mal facturado hasta que alguien actúe.
+ */
+export async function listBillingDrift() {
+  return withSuperadmin(async (tx) => {
+    const rows =
+      await tx.$queryRaw<DriftRow[]>`SELECT * FROM superadmin_billing_drift()`;
+    return rows.map((r) => ({
+      companyId: r.company_id,
+      companyName: r.company_name,
+      subStatus: r.sub_status,
+      billedQuantity: r.billed_quantity,
+      actualActive: Number(r.actual_active),
+      billedEur: tramoFor(r.billed_quantity).eur,
+      correctEur: tramoFor(Number(r.actual_active)).eur,
+    }));
+  });
+}
+
+/**
+ * Métricas de plataforma. El MRR sigue siendo ESTIMADO (se calcula sobre el
+ * `quantity` cacheado y la tabla local de tramos), pero ya no mezcla peras con
+ * manzanas: `mrrEur` cuenta SOLO lo que se cobra hoy. Las pruebas van aparte en
+ * `trialingCompanies` (facturan 0 €) y los impagos en `mrrAtRiskEur`.
+ */
 export async function getMetrics() {
   return withSuperadmin(async (tx) => {
-    const totalCompanies = await tx.company.count();
-    const subs = await tx.subscription.findMany({
-      select: { status: true, quantity: true },
-    });
-    const paying = subs.filter((s) => isActive(s.status));
-    const mrrEur = paying.reduce((sum, s) => sum + tramoFor(s.quantity).eur, 0);
+    const [totalCompanies, byStatus, subs] = await Promise.all([
+      tx.company.count(),
+      tx.company.groupBy({ by: ["status"], _count: true }),
+      tx.subscription.findMany({ select: { status: true, quantity: true } }),
+    ]);
+
+    const active = subs.filter((s) => s.status === "active");
+    const trialing = subs.filter((s) => s.status === "trialing");
+    const atRisk = subs.filter(
+      (s) => s.status === "past_due" || s.status === "unpaid",
+    );
+
+    const sumMrr = (rows: typeof subs) =>
+      rows.reduce((sum, s) => sum + tramoFor(s.quantity).eur, 0);
 
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const recentSignups = await tx.company.count({
       where: { createdAt: { gte: since } },
     });
 
+    const countOf = (status: string) =>
+      byStatus.find((r) => r.status === status)?._count ?? 0;
+
     return {
       totalCompanies,
-      payingCompanies: paying.length,
-      mrrEur, // estimado — ver Stripe para el importe exacto
+      activeCompanies: countOf("ACTIVE"),
+      suspendedCompanies: countOf("SUSPENDED"),
+      closedCompanies: countOf("CLOSED"),
+      payingCompanies: active.length,
+      mrrEur: sumMrr(active), // solo status "active"
+      trialingCompanies: trialing.length,
+      mrrInTrialEur: sumMrr(trialing), // lo que entraría si convierten
+      atRiskCompanies: atRisk.length,
+      mrrAtRiskEur: sumMrr(atRisk), // past_due / unpaid
+      // Empresas sin suscripción: registradas pero que no pueden usar el producto.
+      withoutSubscription: totalCompanies - subs.length,
       recentSignups,
     };
   });

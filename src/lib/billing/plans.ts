@@ -26,6 +26,10 @@ export function isActive(status: string | null | undefined): boolean {
 
 /** Tramo (importe €/mes) en el que cae una plantilla de `count` empleados. */
 export function tramoFor(count: number): { eur: number; label: string } {
+  // Sin plantilla no hay tramo: `count: 0` es el default del schema y aparece
+  // entre el checkout y el primer alta. Cobrar el primer tramo por 0 empleados
+  // inflaba el MRR con importes fantasma.
+  if (count <= 0) return { eur: 0, label: "sin empleados" };
   let prev = 0;
   for (const t of TRAMOS) {
     if (t.upTo === null || count <= t.upTo) {
@@ -38,4 +42,19 @@ export function tramoFor(count: number): { eur: number; label: string } {
   // Inalcanzable (el último tramo es upTo:null), pero TS necesita un retorno.
   const last = TRAMOS[TRAMOS.length - 1];
   return { eur: last.eur, label: `${prev}+ empleados` };
+}
+
+/**
+ * MRR real que aporta una suscripción HOY, en €/mes.
+ *
+ * OJO con la diferencia frente a `isActive`: una suscripción en `trialing` da
+ * acceso al producto pero factura 0 €. Contarla como ingreso inflaba el MRR
+ * justo en el segmento más volátil. Aquí solo cuenta lo que se cobra de verdad.
+ */
+export function mrrEurFor(
+  status: string | null | undefined,
+  quantity: number,
+): number {
+  if (status !== "active") return 0;
+  return tramoFor(quantity).eur;
 }

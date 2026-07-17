@@ -8,12 +8,15 @@ import { isSuperadmin, parseWhitelist } from "@/lib/superadmin/guard";
 import { withSuperadmin } from "@/lib/superadmin/db";
 import {
   listCompanies,
+  getCompanyDetail,
   getMetrics,
+  listBillingDrift,
   suspendCompany,
   unsuspendCompany,
   closeCompany,
   purgeCompany,
 } from "@/lib/superadmin/companies";
+import { tramoFor, mrrEurFor } from "@/lib/billing/plans";
 import { hasDb, purgeTenant } from "./helpers";
 
 const d = hasDb ? describe : describe.skip;
@@ -45,6 +48,32 @@ describe("isSuperadmin / parseWhitelist (lógica pura)", () => {
   });
 });
 
+// Lógica pura: fuera de `d` a propósito, para que corra SIEMPRE, también en un
+// CI sin base de datos. Es el cálculo del dinero: no debe saltarse en silencio.
+describe("MRR (lógica pura)", () => {
+  it("una suscripción en prueba factura 0 €", () => {
+    // trialing da acceso al producto (isActive) pero no cobra: contarlo como
+    // ingreso inflaba el MRR justo en el segmento más volátil.
+    expect(mrrEurFor("trialing", 3)).toBe(0);
+    expect(mrrEurFor("active", 3)).toBe(29);
+  });
+
+  it("un impago o una cancelación no cuentan como ingreso", () => {
+    expect(mrrEurFor("past_due", 10)).toBe(0);
+    expect(mrrEurFor("unpaid", 10)).toBe(0);
+    expect(mrrEurFor("canceled", 10)).toBe(0);
+    expect(mrrEurFor(null, 10)).toBe(0);
+  });
+
+  it("sin empleados no hay tramo: 0 € (no el primer tramo)", () => {
+    // `quantity: 0` es el default del schema y existe entre el checkout y el
+    // primer alta. Antes sumaba 29 € fantasma por empresa.
+    expect(tramoFor(0).eur).toBe(0);
+    expect(mrrEurFor("active", 0)).toBe(0);
+    expect(tramoFor(1).eur).toBe(29); // el tramo real empieza en 1
+  });
+});
+
 d("Superadmin — acceso global controlado y acciones", () => {
   let A: { companyId: string; ownerId: string; name: string };
   let B: { companyId: string; ownerId: string; name: string };
@@ -64,7 +93,8 @@ d("Superadmin — acceso global controlado y acciones", () => {
     await withTenant(A.companyId, (tx) =>
       tx.employee.update({ where: { id: e2.id }, data: { active: false } }),
     );
-    void e1;
+    // Un fichaje real, para comprobar los agregados de actividad del panel.
+    await clock(A.companyId, e1.id, A.ownerId, "CLOCK_IN");
   });
 
   afterAll(async () => {
@@ -112,6 +142,62 @@ d("Superadmin — acceso global controlado y acciones", () => {
       await expect(
         prisma.$queryRawUnsafe("SELECT * FROM superadmin_company_stats()"),
       ).rejects.toThrow();
+    });
+
+    it("agrega actividad de fichaje y contacto sin exponer filas", async () => {
+      const companies = await listCompanies();
+      const a = companies.find((c) => c.id === A.companyId);
+      expect(a?.timeEntryCount).toBe(1); // el CLOCK_IN sembrado en beforeAll
+      expect(a?.lastEntryAt).toBeInstanceOf(Date);
+      expect(a?.ownerEmail).toContain("@");
+      expect(a?.pendingInvitations).toBe(0);
+    });
+  });
+
+  describe("ficha de empresa", () => {
+    it("devuelve agregados de la empresa pedida y null si no existe", async () => {
+      const detail = await getCompanyDetail(A.companyId);
+      expect(detail?.name).toBe(A.name);
+      expect(detail?.activeEmployeeCount).toBe(1);
+      expect(detail?.timeEntryCount).toBe(1);
+      expect(await getCompanyDetail("no-existe")).toBeNull();
+    });
+  });
+
+  describe("deriva de facturación", () => {
+    it("la función exige el flag de superadmin (fail-closed)", async () => {
+      await expect(
+        prisma.$queryRawUnsafe("SELECT * FROM superadmin_billing_drift()"),
+      ).rejects.toThrow();
+    });
+
+    it("detecta una empresa que factura menos empleados de los que tiene", async () => {
+      const D = await newTenant("D7");
+      await createEmployee(D.companyId, {
+        name: "Uno",
+        email: `d1.${crypto.randomUUID()}@x.com`,
+      });
+      // Suscripción que dice facturar 0 empleados cuando en realidad hay 1.
+      await withTenant(D.companyId, (tx) =>
+        tx.subscription.create({
+          data: {
+            companyId: D.companyId,
+            stripeCustomerId: `cus_${crypto.randomUUID()}`,
+            stripeSubscriptionId: `sub_${crypto.randomUUID()}`,
+            stripeItemId: `si_${crypto.randomUUID()}`,
+            status: "active",
+            priceId: "price_test",
+            quantity: 0,
+          },
+        }),
+      );
+
+      const drift = await listBillingDrift();
+      const row = drift.find((r) => r.companyId === D.companyId);
+      expect(row).toBeDefined();
+      expect(row?.billedQuantity).toBe(0);
+      expect(row?.actualActive).toBe(1);
+      expect(row?.correctEur).toBe(29); // se está cobrando 0 € en vez de 29 €
     });
   });
 

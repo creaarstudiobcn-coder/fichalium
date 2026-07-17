@@ -23,6 +23,8 @@ export default async function SuperadminLayout({
             </span>
             <NavLink href="/superadmin">Plataforma</NavLink>
             <NavLink href="/superadmin/suscripciones">Suscripciones</NavLink>
+            <NavLink href="/superadmin/auditoria">Auditoría</NavLink>
+            <NavLink href="/superadmin/sistema">Sistema</NavLink>
           </div>
           <div className="flex shrink-0 items-center gap-3">
             <span className="hidden text-xs text-white/70 sm:inline">
