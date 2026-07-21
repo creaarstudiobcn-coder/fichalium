@@ -72,6 +72,14 @@ export type ReportEntry = {
   timestamp: Date;
   /** true si este registro corrige a otro (tiene corrects_id). */
   isCorrection: boolean;
+  /**
+   * Ubicación del fichaje (null si el empleado no dio permiso). SOLO debe
+   * mostrarse al empleador (OWNER/ADMIN); la vista del propio EMPLOYEE no la
+   * pinta. La RLS ya aísla por empresa; el "solo empleador" lo aplica la UI.
+   */
+  lat: number | null;
+  lng: number | null;
+  accuracy: number | null;
 };
 
 /** Lo mínimo que necesita el emparejado de horas. */
@@ -226,6 +234,9 @@ export async function getReport(
         type: true,
         timestamp: true,
         correctsId: true,
+        lat: true,
+        lng: true,
+        accuracy: true,
         employee: { select: { name: true } },
       },
     });
@@ -237,6 +248,9 @@ export async function getReport(
       type: r.type,
       timestamp: r.timestamp,
       isCorrection: r.correctsId !== null,
+      lat: r.lat,
+      lng: r.lng,
+      accuracy: r.accuracy,
     }));
 
     // Ids que han sido corregidos por otro registro → se sustituyen.

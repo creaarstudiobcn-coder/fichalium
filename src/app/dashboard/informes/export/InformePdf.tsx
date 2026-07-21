@@ -44,11 +44,17 @@ const styles = StyleSheet.create({
   headRow: { backgroundColor: "#f1f5f9" },
   headCell: { fontFamily: "Helvetica-Bold", color: "#334155" },
   cell: { paddingHorizontal: 4 },
-  // anchos del historial
+  // anchos del historial (sin columna de ubicación)
   cEmpleado: { width: "34%" },
   cTipo: { width: "18%" },
   cFecha: { width: "33%" },
   cCorr: { width: "15%" },
+  // anchos del historial CON columna de ubicación (solo empleador)
+  gEmpleado: { width: "27%" },
+  gTipo: { width: "13%" },
+  gFecha: { width: "27%" },
+  gUbic: { width: "21%" },
+  gCorr: { width: "12%" },
   // anchos del resumen de horas
   hEmpleado: { width: "45%" },
   hDia: { width: "35%" },
@@ -79,6 +85,8 @@ export type InformePdfProps = {
   generatedAt: Date;
   entries: ReportEntry[];
   dailyHours: DayHours[];
+  /** Añade la columna de ubicación (solo cuando lo pide el empleador). */
+  includeLocation?: boolean;
 };
 
 export function buildInformePdf(props: InformePdfProps) {
@@ -89,7 +97,23 @@ export function buildInformePdf(props: InformePdfProps) {
     generatedAt,
     entries,
     dailyHours,
+    includeLocation = false,
   } = props;
+
+  // Anchos de columna según haya o no columna de ubicación.
+  const col = includeLocation
+    ? {
+        empleado: styles.gEmpleado,
+        tipo: styles.gTipo,
+        fecha: styles.gFecha,
+        corr: styles.gCorr,
+      }
+    : {
+        empleado: styles.cEmpleado,
+        tipo: styles.cTipo,
+        fecha: styles.cFecha,
+        corr: styles.cCorr,
+      };
 
   return (
     <Document
@@ -124,37 +148,49 @@ export function buildInformePdf(props: InformePdfProps) {
         ) : (
           <View style={styles.table}>
             <View style={[styles.row, styles.headRow]} fixed>
-              <Text style={[styles.cell, styles.cEmpleado, styles.headCell]}>
+              <Text style={[styles.cell, col.empleado, styles.headCell]}>
                 Empleado
               </Text>
-              <Text style={[styles.cell, styles.cTipo, styles.headCell]}>
+              <Text style={[styles.cell, col.tipo, styles.headCell]}>
                 Tipo
               </Text>
-              <Text style={[styles.cell, styles.cFecha, styles.headCell]}>
+              <Text style={[styles.cell, col.fecha, styles.headCell]}>
                 Fecha y hora (España)
               </Text>
-              <Text style={[styles.cell, styles.cCorr, styles.headCell]}>
+              {includeLocation && (
+                <Text style={[styles.cell, styles.gUbic, styles.headCell]}>
+                  Ubicación (lat, lng)
+                </Text>
+              )}
+              <Text style={[styles.cell, col.corr, styles.headCell]}>
                 Corrección
               </Text>
             </View>
             {entries.map((e) => (
               <View key={e.id} style={styles.row} wrap={false}>
-                <Text style={[styles.cell, styles.cEmpleado]}>
+                <Text style={[styles.cell, col.empleado]}>
                   {e.employeeName}
                 </Text>
                 <Text
                   style={[
                     styles.cell,
-                    styles.cTipo,
+                    col.tipo,
                     e.type === "CLOCK_IN" ? styles.in : styles.out,
                   ]}
                 >
                   {e.type === "CLOCK_IN" ? "Entrada" : "Salida"}
                 </Text>
-                <Text style={[styles.cell, styles.cFecha]}>
+                <Text style={[styles.cell, col.fecha]}>
                   {formatMadrid(e.timestamp)}
                 </Text>
-                <Text style={[styles.cell, styles.cCorr, styles.badge]}>
+                {includeLocation && (
+                  <Text style={[styles.cell, styles.gUbic]}>
+                    {e.lat !== null && e.lng !== null
+                      ? `${e.lat.toFixed(5)}, ${e.lng.toFixed(5)}`
+                      : "—"}
+                  </Text>
+                )}
+                <Text style={[styles.cell, col.corr, styles.badge]}>
                   {e.isCorrection ? "Corrección" : ""}
                 </Text>
               </View>

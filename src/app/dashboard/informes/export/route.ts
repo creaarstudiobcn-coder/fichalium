@@ -73,20 +73,30 @@ export async function GET(req: NextRequest) {
 
   const report = await getReport(companyId, filters);
 
+  // La ubicación es dato de terceros: solo se exporta al empleador, nunca al
+  // propio EMPLOYEE (que solo saca su jornada, sin coordenadas).
+  const includeLocation = session.user.role !== "EMPLOYEE";
+
   if (format === "csv") {
-    const header = ["Empleado", "Tipo", "Fecha y hora (España)", "Corrección"];
+    const header = ["Empleado", "Tipo", "Fecha y hora (España)"];
+    if (includeLocation) header.push("Ubicación");
+    header.push("Corrección");
     const lines = [header.map(csvField).join(",")];
     for (const e of report.entries) {
-      lines.push(
-        [
-          e.employeeName,
-          e.type === "CLOCK_IN" ? "Entrada" : "Salida",
-          formatMadrid(e.timestamp),
-          e.isCorrection ? "Sí" : "",
-        ]
-          .map(csvField)
-          .join(","),
-      );
+      const row = [
+        e.employeeName,
+        e.type === "CLOCK_IN" ? "Entrada" : "Salida",
+        formatMadrid(e.timestamp),
+      ];
+      if (includeLocation) {
+        row.push(
+          e.lat !== null && e.lng !== null
+            ? `https://www.google.com/maps?q=${e.lat},${e.lng}`
+            : "",
+        );
+      }
+      row.push(e.isCorrection ? "Sí" : "");
+      lines.push(row.map(csvField).join(","));
     }
     // BOM UTF-8 para que Excel respete los acentos al abrir el CSV.
     const body = "﻿" + lines.join("\r\n");
@@ -114,6 +124,7 @@ export async function GET(req: NextRequest) {
       generatedAt: new Date(),
       entries: report.entries,
       dailyHours: report.dailyHours,
+      includeLocation,
     }),
   );
   const filename = buildFilename(

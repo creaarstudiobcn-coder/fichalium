@@ -206,6 +206,10 @@ export default async function InformesPage({
                 <th className="px-4 py-3 font-medium">Empleado</th>
                 <th className="px-4 py-3 font-medium">Tipo</th>
                 <th className="px-4 py-3 font-medium">Fecha y hora (España)</th>
+                {/* Ubicación: dato de terceros, solo para el empleador. */}
+                {!isEmployee && (
+                  <th className="px-4 py-3 font-medium">Ubicación</th>
+                )}
                 <th className="px-4 py-3 font-medium">Corrección</th>
               </tr>
             </thead>
@@ -213,7 +217,7 @@ export default async function InformesPage({
               {report.entries.length === 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={isEmployee ? 4 : 5}
                     className="px-4 py-8 text-center text-navy/40"
                   >
                     No hay fichajes con los filtros seleccionados.
@@ -239,6 +243,27 @@ export default async function InformesPage({
                   <td className="px-4 py-3 text-navy/70 font-mono">
                     {formatMadrid(e.timestamp)}
                   </td>
+                  {!isEmployee && (
+                    <td className="px-4 py-3 text-sm">
+                      {e.lat !== null && e.lng !== null ? (
+                        <a
+                          href={`https://www.google.com/maps?q=${e.lat},${e.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-pulse underline-offset-2 hover:underline"
+                          title={
+                            e.accuracy !== null
+                              ? `Precisión ≈ ${Math.round(e.accuracy)} m`
+                              : undefined
+                          }
+                        >
+                          Ver mapa
+                        </a>
+                      ) : (
+                        <span className="text-navy/30">—</span>
+                      )}
+                    </td>
+                  )}
                   <td className="px-4 py-3">
                     {e.isCorrection && (
                       <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">

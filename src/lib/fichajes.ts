@@ -21,16 +21,24 @@ function lastEntry(tx: Prisma.TransactionClient, employeeId: string) {
   });
 }
 
+/** Ubicación opcional del fichaje. Ya validada/saneada por quien llama. */
+export type FichajeGeo = { lat: number; lng: number; accuracy: number | null };
+
 /**
  * Registra un fichaje (INSERT append-only). Valida en servidor que el tipo
  * pedido es el que toca: impide dos ENTRADAS seguidas (o dos SALIDAS). El tipo
  * esperado se calcula a partir del último fichaje, no se confía en el cliente.
+ *
+ * `geo` es OPCIONAL: si el navegador del empleado no da permiso de ubicación, se
+ * ficha igual sin coordenadas (nunca se bloquea el fichaje por falta de GPS: el
+ * registro horario es obligatorio y sería desproporcionado impedirlo).
  */
 export async function clock(
   companyId: string,
   employeeId: string,
   createdBy: string,
   requestedType: TimeEntryType,
+  geo?: FichajeGeo | null,
 ) {
   return withTenant(companyId, async (tx) => {
     const employee = await tx.employee.findUnique({ where: { id: employeeId } });
@@ -58,6 +66,9 @@ export async function clock(
         type: requestedType,
         timestamp: new Date(), // UTC
         createdBy,
+        lat: geo?.lat ?? null,
+        lng: geo?.lng ?? null,
+        accuracy: geo?.accuracy ?? null,
       },
     });
   });

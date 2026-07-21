@@ -147,6 +147,14 @@ model TimeEntry {
   reason     String? // motivo, obligatorio en correcciones (validado en código)
   createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz
 
+  // Geolocalización del fichaje (one-shot en el momento del toque). SIEMPRE
+  // opcional: si el empleado deniega el permiso del navegador, ficha igual y
+  // estas columnas quedan null. Solo el empleador (OWNER/ADMIN) las ve; nunca el
+  // propio empleado. Ver src/lib/reports.ts y la vista de informes.
+  lat        Float? // latitud WGS84
+  lng        Float? // longitud WGS84
+  accuracy   Float? @map("accuracy") // precisión estimada en metros
+
   company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   employee    Employee   @relation(fields: [employeeId], references: [id], onDelete: Restrict)
   creator     User       @relation("EntryCreator", fields: [createdBy], references: [id], onDelete: Restrict)

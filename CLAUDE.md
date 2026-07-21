@@ -9,8 +9,14 @@
   TODA query filtra por company_id. Usar Row-Level Security de
   Postgres como red de seguridad, no solo filtros en código.
 - Ninguna query de datos sin contexto de tenant. Si falta, es un bug.
-- Datos personales de empleados = RGPD. No biometría. Geolocalización
-  fuera del MVP.
+- Datos personales de empleados = RGPD. No biometría.
+- Geolocalización del fichaje: captura ONE-SHOT en el momento del toque
+  (columnas lat/lng/accuracy en time_entries, nullable). SIEMPRE opcional: si
+  el navegador deniega el permiso se ficha igual sin ubicación (jamás bloquear
+  un fichaje por falta de GPS). Visible SOLO para el empleador (OWNER/ADMIN):
+  la vista y la exportación del propio EMPLOYEE nunca pintan coordenadas. Nada
+  de rastreo continuo. Requiere aviso de transparencia al fichar (ya puesto) +
+  política de privacidad y, según tamaño, EIPD — eso es cosa del cliente.
 
 ## Stack
 - Next.js (App Router) full-stack + TypeScript

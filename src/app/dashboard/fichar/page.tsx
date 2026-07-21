@@ -46,6 +46,28 @@ export default async function FicharPage() {
         </div>
       </header>
 
+      {/* Aviso de transparencia (art. 90 LOPDGDD): informar ANTES de fichar de
+          que se registra la ubicación y quién puede verla. El texto legal
+          completo vive en la política de privacidad. */}
+      <p className="mt-4 flex items-start gap-2 rounded-lg border border-navy/10 bg-offwhite px-3 py-2 text-xs text-navy/60">
+        <svg
+          viewBox="0 0 24 24"
+          className="mt-0.5 h-4 w-4 shrink-0 text-navy/40"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden
+        >
+          <path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" />
+          <circle cx="12" cy="10" r="2.5" />
+        </svg>
+        <span>
+          Al fichar se registra tu ubicación en ese momento, visible solo para la
+          empresa y con fines de control horario. Si tu navegador no da permiso,
+          el fichaje se guarda igualmente sin ubicación.
+        </span>
+      </p>
+
       {statuses.length === 0 ? (
         <div className="mt-8 rounded-xl border border-dashed border-navy/20 bg-white p-8 text-center text-sm text-navy/60">
           No hay empleados activos.{" "}
