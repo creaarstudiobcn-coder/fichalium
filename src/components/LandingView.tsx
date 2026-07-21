@@ -3,6 +3,7 @@ import { Brand } from "@/components/Brand";
 import { SiteFooter } from "@/components/SiteFooter";
 import { LangSwitcher } from "@/components/LangSwitcher";
 import { HowItWorksArt } from "@/components/HowItWorksArt";
+import { PaymentBadges } from "@/components/PaymentBadges";
 import { getDictionary, type Lang } from "@/i18n";
 import { TRAMOS } from "@/lib/billing/plans";
 
@@ -180,6 +181,11 @@ export function LandingView({ lang }: { lang: Lang }) {
             </div>
 
             <p className="mt-8 text-center text-sm text-navy/60">{dict.pricing.trialNote}</p>
+
+            <PaymentBadges
+              title={dict.pricing.paymentsTitle}
+              secure={dict.pricing.paymentsSecure}
+            />
           </div>
         </section>
       </main>

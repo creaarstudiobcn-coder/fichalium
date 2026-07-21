@@ -46,7 +46,9 @@
     "employeesFrom": "Més de {n} empleats",
     "popular": "El més triat",
     "cta": "Comença gratis",
-    "trialNote": "14 dies de prova · sense targeta · cancel·la quan vulguis"
+    "trialNote": "14 dies de prova · sense targeta · cancel·la quan vulguis",
+    "paymentsTitle": "Formes de pagament acceptades",
+    "paymentsSecure": "Pagaments processats de manera segura per Stripe"
   },
   "footer": {
     "copyright": "© {year} Dependalium Global Services S.L.",

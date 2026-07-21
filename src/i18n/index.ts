@@ -35,6 +35,8 @@ export interface Dictionary {
     popular: string;
     cta: string;
     trialNote: string;
+    paymentsTitle: string;
+    paymentsSecure: string;
   };
   footer: {
     copyright: string;

@@ -46,7 +46,9 @@
     "employeesFrom": "Más de {n} empleados",
     "popular": "Más elegido",
     "cta": "Empezar gratis",
-    "trialNote": "14 días de prueba · sin tarjeta · cancela cuando quieras"
+    "trialNote": "14 días de prueba · sin tarjeta · cancela cuando quieras",
+    "paymentsTitle": "Formas de pago aceptadas",
+    "paymentsSecure": "Pagos procesados de forma segura por Stripe"
   },
   "footer": {
     "copyright": "© {year} Dependalium Global Services S.L.",
