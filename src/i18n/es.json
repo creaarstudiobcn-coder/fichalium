@@ -17,6 +17,37 @@
     "ctaPrimary": "Crear cuenta de empresa",
     "ctaSecondary": "Iniciar sesión"
   },
+  "how": {
+    "pill": "Cómo funciona",
+    "title": "De cero a cumplir la ley en 3 pasos",
+    "subtitle": "Sin instalar nada. Todo funciona desde el navegador, en el móvil y en el ordenador.",
+    "steps": [
+      {
+        "title": "Crea tu empresa e invita al equipo",
+        "body": "Registra tu empresa en un minuto y da de alta a tus empleados. Cada uno recibe su acceso; sus datos quedan aislados del resto."
+      },
+      {
+        "title": "Cada empleado ficha entrada y salida",
+        "body": "Un toque para fichar el inicio y el fin de la jornada. Los registros son inalterables: una corrección nunca borra el original."
+      },
+      {
+        "title": "Descarga el informe legal en PDF",
+        "body": "Genera el registro horario de cualquier periodo listo para una inspección. Conservado durante 4 años, como exige la ley."
+      }
+    ]
+  },
+  "pricing": {
+    "pill": "Precios",
+    "title": "Un único plan que crece contigo",
+    "subtitle": "Pagas según el tamaño de tu plantilla. Sin permanencia y con 14 días de prueba gratis.",
+    "perMonth": "/mes",
+    "employeesUpTo": "Hasta {n} empleados",
+    "employeesRange": "De {from} a {to} empleados",
+    "employeesFrom": "Más de {n} empleados",
+    "popular": "Más elegido",
+    "cta": "Empezar gratis",
+    "trialNote": "14 días de prueba · sin tarjeta · cancela cuando quieras"
+  },
   "footer": {
     "copyright": "© {year} Dependalium Global Services S.L.",
     "links": {

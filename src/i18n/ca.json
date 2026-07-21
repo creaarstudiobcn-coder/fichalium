@@ -17,6 +17,37 @@
     "ctaPrimary": "Crear compte d'empresa",
     "ctaSecondary": "Iniciar sessió"
   },
+  "how": {
+    "pill": "Com funciona",
+    "title": "De zero a complir la llei en 3 passos",
+    "subtitle": "Sense instal·lar res. Tot funciona des del navegador, al mòbil i a l'ordinador.",
+    "steps": [
+      {
+        "title": "Crea la teva empresa i convida l'equip",
+        "body": "Registra la teva empresa en un minut i dona d'alta els empleats. Cadascú rep el seu accés; les seves dades queden aïllades de la resta."
+      },
+      {
+        "title": "Cada empleat fitxa entrada i sortida",
+        "body": "Un toc per fitxar l'inici i el final de la jornada. Els registres són inalterables: una correcció mai esborra l'original."
+      },
+      {
+        "title": "Descarrega l'informe legal en PDF",
+        "body": "Genera el registre horari de qualsevol període a punt per a una inspecció. Conservat durant 4 anys, com exigeix la llei."
+      }
+    ]
+  },
+  "pricing": {
+    "pill": "Preus",
+    "title": "Un únic pla que creix amb tu",
+    "subtitle": "Pagues segons la mida de la teva plantilla. Sense permanència i amb 14 dies de prova gratis.",
+    "perMonth": "/mes",
+    "employeesUpTo": "Fins a {n} empleats",
+    "employeesRange": "De {from} a {to} empleats",
+    "employeesFrom": "Més de {n} empleats",
+    "popular": "El més triat",
+    "cta": "Comença gratis",
+    "trialNote": "14 dies de prova · sense targeta · cancel·la quan vulguis"
+  },
   "footer": {
     "copyright": "© {year} Dependalium Global Services S.L.",
     "links": {

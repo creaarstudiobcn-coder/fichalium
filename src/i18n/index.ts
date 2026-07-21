@@ -18,6 +18,24 @@ export interface Dictionary {
     ctaPrimary: string;
     ctaSecondary: string;
   };
+  how: {
+    pill: string;
+    title: string;
+    subtitle: string;
+    steps: { title: string; body: string }[];
+  };
+  pricing: {
+    pill: string;
+    title: string;
+    subtitle: string;
+    perMonth: string;
+    employeesUpTo: string;
+    employeesRange: string;
+    employeesFrom: string;
+    popular: string;
+    cta: string;
+    trialNote: string;
+  };
   footer: {
     copyright: string;
     links: { legal: string; privacy: string; cookies: string; terms: string };
