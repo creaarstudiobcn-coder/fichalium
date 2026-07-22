@@ -48,13 +48,23 @@ async function resolveCompanyId(sub: Stripe.Subscription): Promise<string | null
 /** Upsert de la suscripción cacheada, fijando el contexto de tenant. */
 async function upsert(companyId: string, sub: Stripe.Subscription) {
   const data = fieldsFrom(sub);
-  await withTenant(companyId, (tx) =>
-    tx.subscription.upsert({
+  await withTenant(companyId, async (tx) => {
+    // La empresa pudo purgarse (borrado RGPD). Un evento tardío de Stripe (p. ej.
+    // el `deleted` que llega tras cancelar en la purga) NO debe intentar escribir
+    // una suscripción sin empresa: reventaría por la FK y Stripe reintentaría en
+    // bucle (500). Si la empresa ya no existe, es un no-op.
+    const company = await tx.company.findUnique({
+      where: { id: companyId },
+      select: { id: true },
+    });
+    if (!company) return;
+
+    await tx.subscription.upsert({
       where: { companyId },
       create: { companyId, ...data },
       update: data,
-    }),
-  );
+    });
+  });
 }
 
 /**

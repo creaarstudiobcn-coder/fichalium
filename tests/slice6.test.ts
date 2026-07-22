@@ -145,6 +145,30 @@ d("SLICE 6 — suscripción por tramos (Stripe)", () => {
       await handleStripeEvent(event("customer.subscription.created", orphan));
       expect(await getSubscription(B.companyId)).toBeNull();
     });
+
+    it("un evento tardío de una empresa PURGADA es no-op (no 500-loop)", async () => {
+      const C = await newTenant("C6");
+      const custId = `cus_${crypto.randomUUID()}`;
+      await handleStripeEvent(
+        event("customer.subscription.created", fakeSub(C.companyId, { customer: custId })),
+      );
+      expect(await getSubscription(C.companyId)).not.toBeNull();
+
+      // Borrado RGPD de la empresa (como purgeCompany).
+      await purgeTenant(C.companyId);
+
+      // El `deleted` que llega DESPUÉS no debe lanzar ni recrear la fila: sin
+      // empresa, el handler lo ignora en vez de reventar por la FK.
+      await expect(
+        handleStripeEvent(
+          event(
+            "customer.subscription.deleted",
+            fakeSub(C.companyId, { customer: custId, status: "canceled" }),
+          ),
+        ),
+      ).resolves.toBeUndefined();
+      expect(await getSubscription(C.companyId)).toBeNull();
+    });
   });
 
   describe("aislamiento por empresa", () => {

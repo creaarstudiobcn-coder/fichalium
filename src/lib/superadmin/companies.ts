@@ -290,25 +290,32 @@ export async function unsuspendCompany(
   });
 }
 
-/** Da de baja: cancela la suscripción en Stripe y marca CLOSED (conserva datos). */
-export async function closeCompany(companyId: string, actor: SuperadminActor) {
+/**
+ * Cancela en Stripe la suscripción de una empresa (best-effort). Devuelve si se
+ * canceló. Lo usan `closeCompany` (baja) y `purgeCompany` (borrado RGPD) para no
+ * seguir cobrando a una empresa que ya no opera. El webhook reflejará el
+ * `canceled`; si la empresa ya se purgó, el handler lo ignora (no-op).
+ */
+async function cancelStripeForCompany(companyId: string): Promise<boolean> {
   const sub = await withSuperadmin((tx) =>
     tx.subscription.findUnique({
       where: { companyId },
       select: { stripeSubscriptionId: true },
     }),
   );
-
-  // Cancela en Stripe (best-effort): el webhook reflejará el canceled.
-  let stripeCanceled = false;
-  if (sub?.stripeSubscriptionId) {
-    try {
-      await getStripe().subscriptions.cancel(sub.stripeSubscriptionId);
-      stripeCanceled = true;
-    } catch (err) {
-      console.error("closeCompany: fallo al cancelar en Stripe:", err);
-    }
+  if (!sub?.stripeSubscriptionId) return false;
+  try {
+    await getStripe().subscriptions.cancel(sub.stripeSubscriptionId);
+    return true;
+  } catch (err) {
+    console.error("cancelStripeForCompany: fallo al cancelar en Stripe:", err);
+    return false;
   }
+}
+
+/** Da de baja: cancela la suscripción en Stripe y marca CLOSED (conserva datos). */
+export async function closeCompany(companyId: string, actor: SuperadminActor) {
+  const stripeCanceled = await cancelStripeForCompany(companyId);
 
   await withSuperadmin(async (tx) => {
     const c = await tx.company.findUnique({
@@ -346,8 +353,17 @@ export async function purgeCompany(
     throw new SuperadminError("El nombre no coincide. Purga cancelada.");
   }
 
+  // Cancela en Stripe ANTES de borrar (después de la cascada ya no tendríamos el
+  // stripeSubscriptionId). Si no se hace, Stripe seguiría cobrando a una empresa
+  // borrada y el RGPD quedaría incompleto en Stripe. El `deleted` que emita
+  // llegará al webhook cuando la empresa ya no exista → el handler lo ignora.
+  const stripeCanceled = await cancelStripeForCompany(companyId);
+
   await withSuperadmin((tx) =>
-    writeAudit(tx, actor, "PURGE", companyId, { name: company.name }),
+    writeAudit(tx, actor, "PURGE", companyId, {
+      name: company.name,
+      stripeCanceled,
+    }),
   );
 
   await prisma.$transaction(async (tx) => {
