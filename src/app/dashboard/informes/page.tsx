@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { getCompanyStatus, canManage } from "@/lib/access";
 import { listEmployees } from "@/lib/employees";
 import {
   getReport,
@@ -10,7 +11,9 @@ import {
   formatMadrid,
   formatMadridDate,
   formatDuration,
+  madridDatetimeLocalValue,
 } from "@/lib/datetime";
+import { CorreccionDialog } from "./CorreccionDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -30,13 +33,17 @@ export default async function InformesPage({
   const scope = scopeReportToViewer(parseReportFilters(params), session.user);
   const filters = scope ?? {};
 
-  const [employees, report] = await Promise.all([
+  const [employees, report, status] = await Promise.all([
     // El selector de compañeros solo tiene sentido para quien puede verlos.
     isEmployee ? Promise.resolve([]) : listEmployees(session.user.companyId),
     scope
       ? getReport(session.user.companyId, scope)
       : Promise.resolve({ entries: [], dailyHours: [] }),
+    getCompanyStatus(session.user.companyId),
   ]);
+
+  // Corregir/añadir fichajes: solo la empresa (OWNER/ADMIN) y con la cuenta activa.
+  const canCorrect = !isEmployee && canManage(status);
 
   // Query string para los enlaces de exportación (mismos filtros aplicados).
   const exportQuery = new URLSearchParams();
@@ -191,14 +198,22 @@ export default async function InformesPage({
 
       {/* ───────── Detalle de fichajes ───────── */}
       <section className="mt-10">
-        <h2 className="text-lg text-navy">
-          Detalle de fichajes
-        </h2>
-        <p className="mt-1 text-sm text-navy/60">
-          {report.entries.length}{" "}
-          {report.entries.length === 1 ? "registro" : "registros"}, del más
-          reciente al más antiguo.
-        </p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-lg text-navy">Detalle de fichajes</h2>
+            <p className="mt-1 text-sm text-navy/60">
+              {report.entries.length}{" "}
+              {report.entries.length === 1 ? "registro" : "registros"}, del más
+              reciente al más antiguo.
+            </p>
+          </div>
+          {canCorrect && employees.length > 0 && (
+            <CorreccionDialog
+              mode="manual"
+              empleados={employees.map((e) => ({ id: e.id, name: e.name }))}
+            />
+          )}
+        </div>
         <div className="mt-3 overflow-x-auto rounded-xl border border-navy/10 bg-white">
           <table className="w-full min-w-[560px] text-sm">
             <thead className="border-b border-navy/10 bg-offwhite text-left text-xs uppercase tracking-wide text-navy/60">
@@ -211,13 +226,16 @@ export default async function InformesPage({
                   <th className="px-4 py-3 font-medium">Ubicación</th>
                 )}
                 <th className="px-4 py-3 font-medium">Corrección</th>
+                {canCorrect && (
+                  <th className="px-4 py-3 font-medium">Acciones</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-navy/5">
               {report.entries.length === 0 && (
                 <tr>
                   <td
-                    colSpan={isEmployee ? 4 : 5}
+                    colSpan={4 + (isEmployee ? 0 : 1) + (canCorrect ? 1 : 0)}
                     className="px-4 py-8 text-center text-navy/40"
                   >
                     No hay fichajes con los filtros seleccionados.
@@ -240,7 +258,14 @@ export default async function InformesPage({
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-navy/70 font-mono">
+                  <td
+                    className={
+                      "px-4 py-3 font-mono " +
+                      (e.superseded
+                        ? "text-navy/40 line-through"
+                        : "text-navy/70")
+                    }
+                  >
                     {formatMadrid(e.timestamp)}
                   </td>
                   {!isEmployee && (
@@ -265,12 +290,30 @@ export default async function InformesPage({
                     </td>
                   )}
                   <td className="px-4 py-3">
-                    {e.isCorrection && (
+                    {e.superseded ? (
+                      <span className="rounded-full bg-navy/10 px-2 py-0.5 text-xs font-medium text-navy/50">
+                        Sustituida
+                      </span>
+                    ) : e.isCorrection ? (
                       <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
                         Corrección
                       </span>
-                    )}
+                    ) : null}
                   </td>
+                  {canCorrect && (
+                    <td className="px-4 py-3">
+                      {!e.superseded && (
+                        <CorreccionDialog
+                          mode="correct"
+                          employeeId={e.employeeId}
+                          employeeName={e.employeeName}
+                          defaultType={e.type}
+                          defaultLocal={madridDatetimeLocalValue(e.timestamp)}
+                          correctsId={e.id}
+                        />
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

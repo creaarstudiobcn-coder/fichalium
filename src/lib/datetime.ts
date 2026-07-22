@@ -59,6 +59,25 @@ export function madridWallTimeToUtc(wall: string): Date {
   return new Date(asIfUtc.getTime() - offsetMs);
 }
 
+/**
+ * Un instante UTC → valor para un `<input type="datetime-local">` en hora
+ * española ("YYYY-MM-DDTHH:mm"). Inverso de `madridWallTimeToUtc` (que espera
+ * "YYYY-MM-DDTHH:mm:ss"). Sirve para prellenar el formulario de corrección.
+ */
+export function madridDatetimeLocalValue(date: Date): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: MADRID,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+
 /** Minutos → "7h 30min" (o "45min" / "0min"). */
 export function formatDuration(minutes: number): string {
   const m = Math.max(0, Math.round(minutes));

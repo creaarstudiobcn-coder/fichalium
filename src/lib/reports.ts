@@ -72,6 +72,8 @@ export type ReportEntry = {
   timestamp: Date;
   /** true si este registro corrige a otro (tiene corrects_id). */
   isCorrection: boolean;
+  /** true si OTRO registro posterior lo corrige (queda sustituido). */
+  superseded: boolean;
   /**
    * Ubicación del fichaje (null si el empleado no dio permiso). SOLO debe
    * mostrarse al empleador (OWNER/ADMIN); la vista del propio EMPLOYEE no la
@@ -220,6 +222,7 @@ export type Report = {
 export async function getReport(
   companyId: string,
   filters: ReportFilters = {},
+  opts: { openEnd?: Date } = {},
 ): Promise<Report> {
   const range = resolveRange(filters);
   const where = buildWhere(filters, range);
@@ -241,6 +244,11 @@ export async function getReport(
       },
     });
 
+    // Ids que han sido corregidos por otro registro → quedan sustituidos.
+    const supersededIds = new Set(
+      rows.map((r) => r.correctsId).filter((id): id is string => id !== null),
+    );
+
     const entries: ReportEntry[] = rows.map((r) => ({
       id: r.id,
       employeeId: r.employeeId,
@@ -248,15 +256,12 @@ export async function getReport(
       type: r.type,
       timestamp: r.timestamp,
       isCorrection: r.correctsId !== null,
+      superseded: supersededIds.has(r.id),
       lat: r.lat,
       lng: r.lng,
       accuracy: r.accuracy,
     }));
 
-    // Ids que han sido corregidos por otro registro → se sustituyen.
-    const supersededIds = new Set(
-      rows.map((r) => r.correctsId).filter((id): id is string => id !== null),
-    );
     const forHours: PairableEntry[] = rows
       .filter((r) => !supersededIds.has(r.id))
       .map((r) => ({
@@ -266,7 +271,7 @@ export async function getReport(
         timestamp: r.timestamp,
       }));
 
-    return { entries, dailyHours: computeDailyHours(forHours) };
+    return { entries, dailyHours: computeDailyHours(forHours, opts) };
   });
 }
 
@@ -288,17 +293,14 @@ export async function todayHoursByEmployee(
   now: Date = new Date(),
 ): Promise<TodaySummary[]> {
   const todayKey = madridDayKey(now);
-  const report = await getReport(companyId, { from: todayKey, to: todayKey });
-  const today = computeDailyHours(
-    report.entries.map((e) => ({
-      employeeId: e.employeeId,
-      employeeName: e.employeeName,
-      type: e.type,
-      timestamp: e.timestamp,
-    })),
+  // Con `openEnd: now`, getReport ya excluye los fichajes sustituidos por una
+  // corrección (no los contamos dos veces) y cierra el turno abierto hasta ahora.
+  const report = await getReport(
+    companyId,
+    { from: todayKey, to: todayKey },
     { openEnd: now },
   );
-  return today.map((d) => ({
+  return report.dailyHours.map((d) => ({
     employeeId: d.employeeId,
     employeeName: d.employeeName,
     minutes: d.minutes,
