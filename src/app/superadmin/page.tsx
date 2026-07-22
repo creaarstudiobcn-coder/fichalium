@@ -8,6 +8,7 @@ import {
 } from "@/lib/superadmin/companies";
 import { formatMadrid } from "@/lib/datetime";
 import { ActionButton } from "./ActionButton";
+import { ReconcileButton } from "./ReconcileButton";
 import { ConfirmarPurga } from "./ConfirmarPurga";
 import { suspendAction, unsuspendAction, closeAction } from "./actions";
 
@@ -45,13 +46,18 @@ export default async function SuperadminPage() {
       {/* Deriva de facturación: dinero mal cobrado. Nada lo reconcilia solo. */}
       {drift.length > 0 && (
         <section className="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-5">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-amber-900">
-            ⚠ Facturación desincronizada ({drift.length})
-          </h2>
-          <p className="mt-1 text-sm text-amber-900/80">
-            Estas empresas facturan un número de empleados distinto del real. No
-            se corrige solo: si el envío a Stripe falló, Stripe no emite webhook.
-          </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wide text-amber-900">
+                ⚠ Facturación desincronizada ({drift.length})
+              </h2>
+              <p className="mt-1 text-sm text-amber-900/80">
+                Estas empresas facturan un número de empleados distinto del real.
+                Reconcilia para corregir Stripe y la caché de una vez.
+              </p>
+            </div>
+            <ReconcileButton />
+          </div>
           <ul className="mt-3 space-y-2">
             {drift.map((d) => (
               <li key={d.companyId} className="text-sm text-amber-950">

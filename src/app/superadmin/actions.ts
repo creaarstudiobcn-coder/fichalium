@@ -10,8 +10,15 @@ import {
   purgeCompany,
   SuperadminError,
 } from "@/lib/superadmin/companies";
+import { reconcileSubscriptionQuantities } from "@/lib/billing/reconcile";
 
 export type SaState = { error?: string; ok?: boolean };
+
+export type ReconcileState = {
+  error?: string;
+  ok?: boolean;
+  message?: string;
+};
 
 function revalidate() {
   revalidatePath("/superadmin");
@@ -49,6 +56,33 @@ export async function unsuspendAction(_p: SaState, formData: FormData) {
 
 export async function closeAction(_p: SaState, formData: FormData) {
   return guarded(formData, closeCompany);
+}
+
+/**
+ * Reconcilia AHORA el `quantity` de todas las suscripciones activas con el nº
+ * real de empleados (corrige Stripe y la caché). Disparo manual desde el panel;
+ * el cron lo hace a diario. Global (sin companyId).
+ */
+export async function reconcileAction(
+  _p: ReconcileState,
+  _formData: FormData,
+): Promise<ReconcileState> {
+  const actor = await requireSuperadmin();
+  if (!actor) return { error: "No autorizado." };
+
+  try {
+    const s = await reconcileSubscriptionQuantities();
+    revalidate();
+    const msg =
+      s.changed === 0 && s.errors === 0
+        ? `Todo cuadra: ${s.checked} suscripciones revisadas, sin cambios.`
+        : `${s.checked} revisadas · ${s.changed} corregidas${
+            s.errors ? ` · ${s.errors} con error` : ""
+          }.`;
+    return { ok: true, message: msg };
+  } catch {
+    return { error: "No se pudo reconciliar. Revisa las claves de Stripe." };
+  }
 }
 
 /** Purga (borrado físico): exige confirmar el nombre de la empresa. */
