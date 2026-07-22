@@ -13,6 +13,27 @@ const LEGAL_HREFS = {
   terms: "/terminos",
 } as const;
 
+const INSTAGRAM_URL = "https://www.instagram.com/fichalium/";
+
+function InstagramIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 /**
  * Footer del sitio. `dict` es opcional y por defecto usa el español, de modo que
  * las páginas que lo montan sin props (p. ej. las legales) siguen funcionando.
@@ -33,6 +54,15 @@ export function SiteFooter({ dict = esDict.footer }: { dict?: FooterDict }) {
           <p className="text-navy/50">
             {dict.copyright.replace("{year}", String(new Date().getFullYear()))}
           </p>
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-navy/70 transition hover:text-pulse"
+          >
+            <InstagramIcon />
+            <span>{dict.instagram}</span>
+          </a>
         </div>
         <nav className="flex flex-wrap gap-x-5 gap-y-2">
           {links.map((l) => (

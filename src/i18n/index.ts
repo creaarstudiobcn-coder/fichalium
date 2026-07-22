@@ -40,6 +40,7 @@ export interface Dictionary {
   };
   footer: {
     copyright: string;
+    instagram: string;
     links: { legal: string; privacy: string; cookies: string; terms: string };
   };
   langSwitcher: { label: string; es: string; ca: string };
