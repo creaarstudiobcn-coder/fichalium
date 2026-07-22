@@ -25,6 +25,8 @@ const INVITE_ACCEPT = `current_setting('app.invite_accept', true)`; // solo acep
 const STRIPE_SYNC = `current_setting('app.stripe_sync', true)`; // solo webhook de Stripe
 const SUPERADMIN = `current_setting('app.superadmin', true)`; // solo panel superadmin (lectura global)
 const PURGE = `current_setting('app.allow_purge', true)`; // solo teardown / RGPD
+const RESET_LOOKUP = `current_setting('app.reset_lookup', true)`; // solo buscar token de reset (deslogueado)
+const PASSWORD_RESET = `current_setting('app.password_reset', true)`; // solo el flujo de reset: UPDATE de password_hash
 
 // ───────── Rol de aplicación dedicado, SIN BYPASSRLS ─────────
 // El rol propietario de Neon (neondb_owner) tiene BYPASSRLS y se salta la RLS,
@@ -77,6 +79,8 @@ const statements = [
   `ALTER TABLE subscriptions FORCE  ROW LEVEL SECURITY`,
   `ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY`,
   `ALTER TABLE audit_logs FORCE  ROW LEVEL SECURITY`,
+  `ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY`,
+  `ALTER TABLE password_reset_tokens FORCE  ROW LEVEL SECURITY`,
 
   // ───────────────────────── companies ─────────────────────────
   // El "tenant key" de companies es su propio id. Estricto: solo ves/escribes
@@ -105,7 +109,15 @@ const statements = [
   `DROP POLICY IF EXISTS users_insert ON users`,
   `CREATE POLICY users_insert ON users FOR INSERT
      WITH CHECK (company_id = ${TENANT})`,
-  // (sin política UPDATE/DELETE → bajo FORCE quedan denegadas por defecto)
+  // UPDATE: denegado por defecto (sin sesión no se toca users). ÚNICA excepción:
+  // el flujo de recuperación de contraseña, que fija el contexto a la empresa del
+  // token y activa app.password_reset='on' para escribir el nuevo password_hash.
+  // Acotado por flag y por empresa, como allow_purge/stripe_sync.
+  `DROP POLICY IF EXISTS users_password_reset_update ON users`,
+  `CREATE POLICY users_password_reset_update ON users FOR UPDATE
+     USING (company_id = ${TENANT} AND ${PASSWORD_RESET} = 'on')
+     WITH CHECK (company_id = ${TENANT} AND ${PASSWORD_RESET} = 'on')`,
+  // (sin política DELETE → bajo FORCE queda denegada por defecto)
 
   // ───────────────────────── employees ─────────────────────────
   // Aislamiento estricto y fail-closed: sin contexto de tenant → 0 filas.
@@ -136,6 +148,23 @@ const statements = [
   // En la aceptación, el contexto se fija a la empresa de la invitación antes de escribir.
   `DROP POLICY IF EXISTS invitations_update ON invitations`,
   `CREATE POLICY invitations_update ON invitations FOR UPDATE
+     USING (company_id = ${TENANT})
+     WITH CHECK (company_id = ${TENANT})`,
+
+  // ───────────────────────── password_reset_tokens ─────────────────────────
+  // SELECT: tu propia empresa, O durante el reset (app.reset_lookup='on'), que es
+  // la búsqueda por token cross-tenant estando deslogueado (igual que invite_accept).
+  `DROP POLICY IF EXISTS password_resets_select ON password_reset_tokens`,
+  `CREATE POLICY password_resets_select ON password_reset_tokens FOR SELECT
+     USING (company_id = ${TENANT} OR ${RESET_LOOKUP} = 'on')`,
+  // INSERT: se crea el token bajo el contexto de la empresa del usuario (que se
+  // resolvió por email en el bootstrap). Estricto a esa empresa.
+  `DROP POLICY IF EXISTS password_resets_insert ON password_reset_tokens`,
+  `CREATE POLICY password_resets_insert ON password_reset_tokens FOR INSERT
+     WITH CHECK (company_id = ${TENANT})`,
+  // UPDATE: marcar used_at / invalidar pendientes, dentro de tu empresa.
+  `DROP POLICY IF EXISTS password_resets_update ON password_reset_tokens`,
+  `CREATE POLICY password_resets_update ON password_reset_tokens FOR UPDATE
      USING (company_id = ${TENANT})
      WITH CHECK (company_id = ${TENANT})`,
 

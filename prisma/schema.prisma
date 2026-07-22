@@ -38,12 +38,13 @@ model Company {
   createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz
 
-  users        User[]
-  employees    Employee[]
-  timeEntries  TimeEntry[]
-  invitations  Invitation[]
-  subscription Subscription?
-  auditLogs    AuditLog[]
+  users          User[]
+  employees      Employee[]
+  timeEntries    TimeEntry[]
+  invitations    Invitation[]
+  subscription   Subscription?
+  auditLogs      AuditLog[]
+  passwordResets PasswordResetToken[]
 
   @@map("companies")
 }
@@ -64,6 +65,7 @@ model User {
   company        Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   employee       Employee?   @relation("EmployeeAccount", fields: [employeeId], references: [id], onDelete: SetNull)
   createdEntries TimeEntry[] @relation("EntryCreator")
+  passwordResets PasswordResetToken[]
 
   @@index([companyId])
   @@map("users")
@@ -108,6 +110,29 @@ model Invitation {
   @@index([companyId])
   @@index([employeeId])
   @@map("invitations")
+}
+
+// Token de recuperación de contraseña. Mismo patrón que Invitation: el token
+// crudo solo viaja en la URL del email; en BD guardamos su SHA-256. Un solo uso
+// (usedAt) y caducidad corta (1 hora). Lleva company_id como toda tabla, pero la
+// búsqueda es cross-tenant (el usuario está deslogueado) → RLS abierta solo por
+// el flag acotado app.reset_lookup; ver scripts/apply-rls.mjs y src/lib/tenant.ts.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  companyId String    @map("company_id")
+  userId    String    @map("user_id")
+  email     String
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 // Suscripción de Stripe Billing de una empresa (1‑a‑1). El cobro es POR TRAMOS

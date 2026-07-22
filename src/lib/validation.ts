@@ -52,3 +52,23 @@ export const acceptInvitationSchema = z.object({
 });
 
 export type AcceptInvitationInput = z.infer<typeof acceptInvitationSchema>;
+
+export const requestPasswordResetSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Email no válido"),
+});
+
+export type RequestPasswordResetInput = z.infer<
+  typeof requestPasswordResetSchema
+>;
+
+export const confirmPasswordResetSchema = z.object({
+  token: z.string().min(1, "Token no válido"),
+  password: z
+    .string()
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .max(100, "La contraseña es demasiado larga"),
+});
+
+export type ConfirmPasswordResetInput = z.infer<
+  typeof confirmPasswordResetSchema
+>;

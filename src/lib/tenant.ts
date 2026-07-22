@@ -59,6 +59,19 @@ export async function findInvitationByToken(tokenHash: string) {
 }
 
 /**
+ * Resuelve un token de recuperación de contraseña por su hash, estando el
+ * usuario DESLOGUEADO (cross-tenant). Activa el flag acotado `app.reset_lookup`,
+ * que SOLO abre la lectura de `password_reset_tokens`. La escritura del nuevo
+ * password_hash va aparte por `withTenant(companyId)` + `app.password_reset`.
+ */
+export async function findResetTokenByHash(tokenHash: string) {
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.reset_lookup', 'on', true)`;
+    return tx.passwordResetToken.findUnique({ where: { tokenHash } });
+  });
+}
+
+/**
  * Resuelve la empresa de una suscripción para el WEBHOOK de Stripe, que llega
  * sin sesión (cross-tenant). Activa el flag acotado `app.stripe_sync`, que SOLO
  * abre la lectura de `subscriptions`. Camino de respaldo: el webhook prioriza
