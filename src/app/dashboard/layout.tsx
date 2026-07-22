@@ -58,6 +58,11 @@ export default async function DashboardLayout({
             {manage && isOwner && (
               <NavLink href="/dashboard/suscripcion">Suscripción</NavLink>
             )}
+            {isOwner && (
+              <NavLink href="/dashboard/proteccion-datos">
+                Protección de datos
+              </NavLink>
+            )}
           </div>
           <div className="shrink-0">
             <SignOutButton label="Cerrar sesión" />
