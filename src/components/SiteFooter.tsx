@@ -65,6 +65,12 @@ export function SiteFooter({ dict = esDict.footer }: { dict?: FooterDict }) {
           </a>
         </div>
         <nav className="flex flex-wrap gap-x-5 gap-y-2">
+          <Link
+            href="/control-horario"
+            className="text-navy/70 transition hover:text-pulse"
+          >
+            Maresme
+          </Link>
           {links.map((l) => (
             <Link
               key={l.href}

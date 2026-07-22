@@ -15,7 +15,14 @@ import { TRAMOS } from "@/lib/billing/plans";
  * Los precios se derivan de `TRAMOS` (única fuente, compartida con Stripe): la
  * tabla de precios no repite importes, así no se desincroniza del cobro real.
  */
-export function LandingView({ lang }: { lang: Lang }) {
+export function LandingView({
+  lang,
+  local,
+}: {
+  lang: Lang;
+  /** Variante localizada por municipio (SEO): sobreescribe el hero. */
+  local?: { nombre: string; intro: string };
+}) {
   const dict = getDictionary(lang);
 
   // Etiqueta del rango de cada tramo, resuelta con el diccionario del idioma.
@@ -70,10 +77,16 @@ export function LandingView({ lang }: { lang: Lang }) {
         <section className="mx-auto flex w-full max-w-2xl flex-col items-center gap-8 px-6 py-20 text-center sm:py-28">
           <div className="space-y-4">
             <span className="inline-block rounded-full bg-pulse/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-pulse">
-              {dict.hero.pill}
+              {local ? `Control horario · ${local.nombre}` : dict.hero.pill}
             </span>
-            <h1 className="text-4xl text-navy sm:text-5xl">{dict.hero.title}</h1>
-            <p className="text-lg text-navy/70">{dict.hero.subtitle}</p>
+            <h1 className="text-4xl text-navy sm:text-5xl">
+              {local
+                ? `Control horario para empresas en ${local.nombre}`
+                : dict.hero.title}
+            </h1>
+            <p className="text-lg text-navy/70">
+              {local ? local.intro : dict.hero.subtitle}
+            </p>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
