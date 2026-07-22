@@ -54,5 +54,15 @@ export default async function MunicipioPage({
   const m = find(municipio);
   if (!m) notFound();
 
-  return <LandingView lang="es" local={{ nombre: m.nombre, intro: m.intro }} />;
+  return (
+    <LandingView
+      lang="es"
+      local={{
+        nombre: m.nombre,
+        intro: m.intro,
+        cuerpo: m.cuerpo,
+        sectores: m.sectores,
+      }}
+    />
+  );
 }

@@ -15,7 +15,12 @@
     "title": "Fitxatge senzill i conforme a la llei",
     "subtitle": "Fichalium registra la jornada de la teva empresa amb cada client i les seves dades aïllades. Sense biometria, sense complicacions.",
     "ctaPrimary": "Crear compte d'empresa",
-    "ctaSecondary": "Iniciar sessió"
+    "ctaSecondary": "Iniciar sessió",
+    "features": [
+      "Fitxatge amb geolocalització opcional",
+      "Registre conforme a la llei",
+      "Sense biometria"
+    ]
   },
   "how": {
     "pill": "Com funciona",

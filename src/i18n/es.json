@@ -15,7 +15,12 @@
     "title": "Fichaje sencillo y conforme a la ley",
     "subtitle": "Fichalium registra la jornada de tu empresa con cada cliente y sus datos aislados. Sin biometría, sin complicaciones.",
     "ctaPrimary": "Crear cuenta de empresa",
-    "ctaSecondary": "Iniciar sesión"
+    "ctaSecondary": "Iniciar sesión",
+    "features": [
+      "Fichaje con geolocalización opcional",
+      "Registro conforme a la ley",
+      "Sin biometría"
+    ]
   },
   "how": {
     "pill": "Cómo funciona",

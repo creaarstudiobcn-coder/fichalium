@@ -17,6 +17,7 @@ export interface Dictionary {
     subtitle: string;
     ctaPrimary: string;
     ctaSecondary: string;
+    features: string[];
   };
   how: {
     pill: string;
