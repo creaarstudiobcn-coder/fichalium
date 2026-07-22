@@ -1,0 +1,302 @@
+<title>Fichalium · Newsletter — Control horario para empresas del Maresme</title>
+<style>
+  :root {
+    --ground: #eef1f5;
+    --card: #ffffff;
+    --ink: #0f1b2d;
+    --ink-soft: #4a5768;
+    --line: #e4e8ee;
+    --green: #10a06a;
+    --green-ink: #063d28;
+    --green-soft: #e4f5ec;
+    --pulse: #3f5f9e;
+    --alarm: #b23b3b;
+    --alarm-soft: #fbecec;
+    --muted: #7a8595;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0a0f16;
+      --card: #121a24;
+      --ink: #e9eef4;
+      --ink-soft: #b3bdca;
+      --muted: #8390a0;
+      --line: #24303e;
+      --green: #34d399;
+      --green-ink: #d7fbe9;
+      --green-soft: #12271f;
+      --pulse: #8fb0e6;
+      --alarm: #ef8f8f;
+      --alarm-soft: #2a1717;
+    }
+  }
+  :root[data-theme="light"] {
+    --ground: #eef1f5; --card: #fff; --ink: #0f1b2d; --ink-soft: #4a5768;
+    --muted: #7a8595; --line: #e4e8ee; --green: #10a06a; --green-ink: #063d28;
+    --green-soft: #e4f5ec; --pulse: #3f5f9e; --alarm: #b23b3b; --alarm-soft: #fbecec;
+  }
+  :root[data-theme="dark"] {
+    --ground: #0a0f16; --card: #121a24; --ink: #e9eef4; --ink-soft: #b3bdca;
+    --muted: #8390a0; --line: #24303e; --green: #34d399; --green-ink: #d7fbe9;
+    --green-soft: #12271f; --pulse: #8fb0e6; --alarm: #ef8f8f; --alarm-soft: #2a1717;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { padding: clamp(12px, 4vw, 40px) 12px; }
+  .sheet {
+    max-width: 640px; margin: 0 auto; background: var(--card);
+    border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+  }
+  .pad { padding: clamp(22px, 5vw, 40px); }
+
+  a { color: var(--green); }
+
+  /* Header */
+  .top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 18px clamp(22px, 5vw, 40px);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.01em; }
+  .logo {
+    width: 30px; height: 30px; border-radius: 8px; background: var(--ink);
+    color: var(--green); display: grid; place-items: center; font-weight: 800; font-size: 15px;
+  }
+  :root[data-theme="dark"] .logo, .top .logo { }
+  .eyebrow-top { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+  /* Hero */
+  .kicker {
+    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--green);
+    background: var(--green-soft); padding: 5px 11px; border-radius: 999px;
+  }
+  h1 {
+    font-size: clamp(27px, 6.4vw, 40px); line-height: 1.1; letter-spacing: -.02em;
+    margin: 16px 0 12px; text-wrap: balance; font-weight: 800;
+  }
+  .lede { font-size: 17px; color: var(--ink-soft); margin: 0 0 24px; }
+
+  .btn {
+    display: inline-block; background: var(--green); color: #fff;
+    font-weight: 700; text-decoration: none; padding: 14px 26px; border-radius: 11px;
+    font-size: 16px;
+  }
+  :root[data-theme="dark"] .btn { color: #063d28; }
+  .btn-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .btn-note { font-size: 13px; color: var(--muted); }
+
+  /* Alarm stat */
+  .alarm {
+    margin: 4px clamp(22px, 5vw, 40px) 0; border: 1px solid var(--line);
+    border-left: 4px solid var(--alarm); background: var(--alarm-soft);
+    border-radius: 0 12px 12px 0; padding: 16px 18px;
+  }
+  .alarm .big { font-size: 26px; font-weight: 800; color: var(--alarm); letter-spacing: -.01em; }
+  .alarm p { margin: 4px 0 0; font-size: 14px; color: var(--ink-soft); }
+
+  .rule { height: 1px; background: var(--line); border: 0; margin: 0; }
+
+  h2 {
+    font-size: 13px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 18px;
+  }
+
+  /* Steps */
+  .steps { display: grid; gap: 14px; }
+  .step { display: flex; gap: 14px; align-items: flex-start; }
+  .num {
+    flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px;
+    background: var(--ink); color: var(--green); font-weight: 800; font-size: 14px;
+    display: grid; place-items: center; margin-top: 2px;
+  }
+  .step h3 { margin: 0 0 2px; font-size: 16px; }
+  .step p { margin: 0; font-size: 14.5px; color: var(--ink-soft); }
+
+  /* Benefits */
+  .benes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
+  @media (max-width: 460px) { .benes { grid-template-columns: 1fr; } }
+  .bene { display: flex; gap: 10px; align-items: flex-start; }
+  .tick {
+    flex: 0 0 auto; width: 20px; height: 20px; margin-top: 2px; color: var(--green);
+  }
+  .bene b { display: block; font-size: 14.5px; }
+  .bene span { font-size: 13px; color: var(--muted); }
+
+  /* Pricing */
+  .prices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 520px) { .prices { grid-template-columns: 1fr; } }
+  .price {
+    border: 1px solid var(--line); border-radius: 13px; padding: 16px; text-align: center;
+    position: relative;
+  }
+  .price.pop { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+  .price .tag {
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    background: var(--green); color: #fff; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  :root[data-theme="dark"] .price .tag { color: #063d28; }
+  .price .who { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .price .amt { font-size: 27px; font-weight: 800; letter-spacing: -.02em; margin: 4px 0 0; }
+  .price .amt small { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .price-foot { margin: 14px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
+
+  /* Trust */
+  .trust {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; justify-content: center;
+  }
+  .chip {
+    font-size: 12.5px; color: var(--ink-soft); background: var(--ground);
+    border: 1px solid var(--line); padding: 6px 12px; border-radius: 999px;
+  }
+
+  /* CTA band */
+  .cta {
+    background: var(--ink); color: #fff; text-align: center;
+    padding: clamp(26px, 6vw, 40px);
+  }
+  .cta h2 { color: rgba(255,255,255,.6); }
+  .cta .h { font-size: clamp(21px, 5vw, 27px); font-weight: 800; margin: 0 0 8px; letter-spacing: -.01em; color:#fff; }
+  .cta p { color: rgba(255,255,255,.72); font-size: 15px; margin: 0 0 20px; }
+
+  /* Footer */
+  .foot { padding: 22px clamp(22px, 5vw, 40px); font-size: 12.5px; color: var(--muted); }
+  .foot a { color: var(--muted); text-decoration: underline; }
+  .foot .sep { margin: 10px 0; height: 1px; background: var(--line); border: 0; }
+</style>
+
+<div class="wrap">
+  <div class="sheet">
+
+    <!-- Header -->
+    <div class="top">
+      <div class="brand">
+        <svg width="30" height="30" viewBox="0 0 200 200" fill="none" aria-hidden="true" style="display:block;">
+          <circle cx="100" cy="100" r="90" fill="#0F1339"/>
+          <rect x="62" y="52" width="16" height="96" rx="4" fill="#00C49A"/>
+          <rect x="62" y="52" width="72" height="16" rx="4" fill="#00C49A"/>
+          <rect x="62" y="88" width="56" height="14" rx="4" fill="#00C49A"/>
+          <circle cx="148" cy="136" r="18" fill="#00C49A" opacity="0.18"/>
+          <polyline points="138,136 145,144 160,126" stroke="#00C49A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <span>fichalium</span>
+      </div>
+      <span class="eyebrow-top">Registro de jornada · Maresme</span>
+    </div>
+
+    <!-- Hero -->
+    <div class="pad">
+      <span class="kicker">Control horario para empresas</span>
+      <h1>El fichaje de tu equipo, resuelto sin papeleo.</h1>
+      <p class="lede">
+        Desde 2019 toda empresa está obligada a registrar la jornada de su
+        plantilla. Con Fichalium, cada persona ficha desde el móvil y tú tienes
+        el informe listo para la Inspección de Trabajo en un clic.
+      </p>
+      <div class="btn-row">
+        <a class="btn" href="https://www.fichalium.es/register">Empieza gratis</a>
+        <span class="btn-note">14 días de prueba · sin permanencia</span>
+      </div>
+    </div>
+
+    <!-- Alarm -->
+    <div class="alarm">
+      <div class="big">de 751 € a 7.500 €</div>
+      <p>Es la multa por no llevar el registro horario (infracción grave, RD-ley
+        8/2019). No tener un sistema fiable sale caro; ponerlo, hoy, cuesta minutos.</p>
+    </div>
+
+    <div class="pad">
+      <hr class="rule" style="margin-bottom:26px">
+
+      <!-- How -->
+      <h2>Cómo funciona</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="num">1</span>
+          <div><h3>Da de alta a tu equipo</h3>
+            <p>En minutos, desde el navegador. Sin instalar nada ni comprar terminales.</p></div>
+        </div>
+        <div class="step">
+          <span class="num">2</span>
+          <div><h3>Cada persona ficha su jornada</h3>
+            <p>Entrada y salida desde su móvil, con su propia cuenta. Ubicación opcional del fichaje.</p></div>
+        </div>
+        <div class="step">
+          <span class="num">3</span>
+          <div><h3>Descarga el informe</h3>
+            <p>Horas por día y persona, en PDF o Excel. Listo para presentar a la Inspección.</p></div>
+        </div>
+      </div>
+
+      <hr class="rule" style="margin:28px 0">
+
+      <!-- Benefits -->
+      <h2>Por qué Fichalium</h2>
+      <div class="benes">
+        <div class="bene"><svg class="tick" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.1 3.1 6.8-6.8a1 1 0 0 1 1.4 0Z" clip-rule="evenodd"/></svg><div><b>Sin instalaciones</b><span>Funciona en cualquier móvil u ordenador.</span></div></div>
+        <div class="bene"><svg class="tick" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.1 3.1 6.8-6.8a1 1 0 0 1 1.4 0Z" clip-rule="evenodd"/></svg><div><b>Geolocalización opcional</b><span>Comprueba desde dónde se ficha, si lo necesitas.</span></div></div>
+        <div class="bene"><svg class="tick" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.1 3.1 6.8-6.8a1 1 0 0 1 1.4 0Z" clip-rule="evenodd"/></svg><div><b>Correcciones trazables</b><span>¿Se olvidó una salida? Se corrige sin borrar el original.</span></div></div>
+        <div class="bene"><svg class="tick" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.1 3.1 6.8-6.8a1 1 0 0 1 1.4 0Z" clip-rule="evenodd"/></svg><div><b>RGPD, sin biometría</b><span>Nada de huellas ni caras. Datos alojados en la UE.</span></div></div>
+      </div>
+
+      <hr class="rule" style="margin:28px 0">
+
+      <!-- Pricing -->
+      <h2>Precios claros, por tamaño</h2>
+      <div class="prices">
+        <div class="price">
+          <div class="who">1–5 empleados</div>
+          <div class="amt">29 €<small>/mes</small></div>
+        </div>
+        <div class="price pop">
+          <div class="tag">Más elegido</div>
+          <div class="who">6–20 empleados</div>
+          <div class="amt">79 €<small>/mes</small></div>
+        </div>
+        <div class="price">
+          <div class="who">21–50 empleados</div>
+          <div class="amt">149 €<small>/mes</small></div>
+        </div>
+      </div>
+      <p class="price-foot">Empiezas con 14 días gratis. Sin permanencia, cancelas cuando quieras.</p>
+
+      <hr class="rule" style="margin:28px 0 22px">
+
+      <!-- Trust -->
+      <div class="trust">
+        <span class="chip">✓ Conforme a la ley</span>
+        <span class="chip">✓ Registro inalterable</span>
+        <span class="chip">✓ Datos en la Unión Europea</span>
+        <span class="chip">✓ Soporte cercano (Mataró)</span>
+      </div>
+    </div>
+
+    <!-- CTA band -->
+    <div class="cta">
+      <div class="h">Ponte al día con el fichaje hoy mismo</div>
+      <p>Tu empresa cumpliendo la ley en lo que tardas en leer este correo.</p>
+      <a class="btn" href="https://www.fichalium.es/register">Crear mi cuenta gratis</a>
+    </div>
+
+    <!-- Footer -->
+    <div class="foot">
+      Te escribe <strong>Fichalium</strong>, de Dependalium Global Services S.L. ·
+      Mataró (Barcelona) · <a href="https://www.fichalium.es">fichalium.es</a>
+      <hr class="sep">
+      Recibes este correo porque tu empresa podría estar sujeta al registro de
+      jornada obligatorio. Si no quieres saber más de nosotros, puedes darte de
+      baja aquí — sin rencores.
+    </div>
+
+  </div>
+</div>
