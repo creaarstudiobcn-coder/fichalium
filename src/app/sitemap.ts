@@ -38,5 +38,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...home, ...hub, ...municipios];
+  /* Legales y alta. El robots.ts dice que deja rastrear «las páginas legales»,
+     pero el sitemap no las declaraba: las cuatro estaban recibiendo impresiones
+     sin que el sitio las nombrase. /register va aquí porque es la conversión;
+     /login se queda fuera a propósito, no aporta nada a quien busca. */
+  const secundarias: MetadataRoute.Sitemap = [
+    { url: `${BASE}/register`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/aviso-legal`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${BASE}/privacidad`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${BASE}/cookies`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${BASE}/terminos`, changeFrequency: "yearly", priority: 0.2 },
+  ];
+
+  return [...home, ...hub, ...municipios, ...secundarias];
 }
