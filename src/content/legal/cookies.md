@@ -1,6 +1,6 @@
 # Política de Cookies
 
-**Última actualización:** 24 de junio de 2026
+**Última actualización:** 29 de septiembre de 2026
 
 ## 1. ¿Qué son las cookies?
 
@@ -15,9 +15,9 @@ Son imprescindibles para el funcionamiento del Sitio Web y la prestación del se
 - **Cookies de sesión y autenticación:** mantienen la sesión iniciada del usuario y garantizan el acceso seguro a su cuenta.
 - **Cookies de preferencias de consentimiento:** recuerdan la elección del usuario respecto a las cookies para no volver a mostrar el aviso.
 
-### Cookies analíticas
+### Cookies analíticas y de terceros
 
-Permiten medir y analizar el uso del Sitio Web para mejorar el servicio. Estas cookies **solo se activan si el usuario las acepta**. Pueden ser proporcionadas por terceros como Google Analytics.
+Actualmente Fichalium **no utiliza cookies analíticas, publicitarias ni de terceros**. Si en el futuro se incorporara alguna herramienta de medición, solo se activaría con el consentimiento previo del usuario y esta política se actualizaría indicando qué cookies son y quién las proporciona.
 
 ## 3. Gestión y revocación del consentimiento
 

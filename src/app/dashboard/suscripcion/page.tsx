@@ -99,6 +99,15 @@ export default async function SuscripcionPage() {
               />
             </dl>
 
+            {sub.status === "trialing" && !sub.cancelAtPeriodEnd && (
+              <p className="mt-4 rounded-md bg-sky-50 px-3 py-2 text-sm text-sky-900">
+                Estás en la prueba gratuita
+                {sub.currentPeriodEnd ? ` hasta el ${formatMadrid(sub.currentPeriodEnd)}` : ""}.
+                Para seguir después, añade una tarjeta en «Gestionar suscripción». Si no,
+                la suscripción se cancelará sola ese día y no se te cobrará nada.
+              </p>
+            )}
+
             {sub.cancelAtPeriodEnd && (
               <p className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 La suscripción se cancelará al final del periodo actual.
@@ -117,12 +126,12 @@ export default async function SuscripcionPage() {
               Aún no tienes suscripción
             </p>
             <p className="mt-1 text-sm text-navy/60">
-              Suscríbete para dar de alta e invitar a tu equipo. Incluye 14 días
-              de prueba.
+              Suscríbete para dar de alta e invitar a tu equipo. Los primeros 14
+              días son de prueba gratis y no hace falta tarjeta.
             </p>
             <form action={startCheckoutAction} className="mt-6">
               <button className="rounded-lg bg-ficha px-4 py-2.5 text-sm font-semibold text-navy transition hover:bg-ficha/90">
-                Suscribirse
+                Empezar prueba gratis (sin tarjeta)
               </button>
             </form>
           </>

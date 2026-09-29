@@ -58,14 +58,32 @@ export async function startCheckoutAction() {
     tx.employee.count({ where: { active: true } }),
   );
 
+  // Una sola prueba por empresa: si ya tuvo suscripción (aunque esté cancelada),
+  // la siguiente va sin prueba y con tarjeta. Sin esto, cancelar y volver a
+  // empezar daba 14 días gratis cada vez.
+  const yaTuvo = await withTenant(user.companyId, (tx) =>
+    tx.subscription.findUnique({ where: { companyId: user.companyId }, select: { id: true } }),
+  );
+  const conPrueba = !yaTuvo;
+
   const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
     client_reference_id: user.companyId,
     // Sin payment_method_types: Stripe elige dinámicamente los métodos.
     line_items: [{ price: PRICE_ID, quantity: Math.max(activeCount, 1) }],
+    // La web promete «14 días de prueba · sin tarjeta» (29/09/2026): con la
+    // prueba, Stripe NO pide tarjeta. Sin prueba, hay importe y la pide igual.
+    ...(conPrueba ? { payment_method_collection: "if_required" as const } : {}),
     subscription_data: {
-      trial_period_days: TRIAL_DAYS,
+      ...(conPrueba
+        ? {
+            trial_period_days: TRIAL_DAYS,
+            // Si al acabar la prueba no hay tarjeta, se cancela sola: ni cobro
+            // fallido ni deuda. El webhook la deja en «canceled» y se bloquea la gestión.
+            trial_settings: { end_behavior: { missing_payment_method: "cancel" as const } },
+          }
+        : {}),
       metadata: { companyId: user.companyId },
     },
     success_url: `${baseUrl()}/dashboard/suscripcion?success=1`,
