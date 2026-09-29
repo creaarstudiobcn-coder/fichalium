@@ -41,6 +41,8 @@ export async function generateMetadata({
       url: path,
       locale: "es_ES",
       type: "website",
+      // Un openGraph de página sustituye entero al del layout: se repone la imagen general.
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Fichalium · Fichaje sencillo y conforme a la ley" }],
     },
   };
 }
