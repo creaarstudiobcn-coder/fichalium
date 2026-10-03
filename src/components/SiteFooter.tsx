@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "@/components/Brand";
+import { BotonPreferencias } from "@/components/CookieBanner";
 import esDict from "@/i18n/es.json";
 import type { Dictionary } from "@/i18n";
 
@@ -80,6 +81,7 @@ export function SiteFooter({ dict = esDict.footer }: { dict?: FooterDict }) {
               {l.label}
             </Link>
           ))}
+          <BotonPreferencias className="text-navy/70 transition hover:text-pulse" />
         </nav>
       </div>
     </footer>

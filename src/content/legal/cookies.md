@@ -17,11 +17,20 @@ Son imprescindibles para el funcionamiento del Sitio Web y la prestación del se
 
 ### Cookies analíticas y de terceros
 
+<!--si-analitica-->
+En las páginas públicas del Sitio Web (no dentro de la aplicación) se utiliza **Google Analytics 4**, de Google Ireland Ltd., para saber de forma agregada cuántas personas visitan la web y qué páginas leen. **Solo se instala si el usuario pulsa «Aceptar» en el aviso de cookies**; si lo rechaza o no responde, no se carga nada de Google.
+
+- **_ga** y las que empiezan por **_ga_** — Google Analytics 4. Distinguen visitas y sesiones de forma estadística. Duración: hasta 2 años.
+
+Fichalium no utiliza cookies publicitarias. Dentro de la aplicación (panel de empresa y fichaje) no se usa ninguna herramienta de medición.
+<!--/si-analitica-->
+<!--no-analitica-->
 Actualmente Fichalium **no utiliza cookies analíticas, publicitarias ni de terceros**. Si en el futuro se incorporara alguna herramienta de medición, solo se activaría con el consentimiento previo del usuario y esta política se actualizaría indicando qué cookies son y quién las proporciona.
+<!--/no-analitica-->
 
 ## 3. Gestión y revocación del consentimiento
 
-Al acceder por primera vez al Sitio Web se muestra un aviso de cookies que permite aceptar o rechazar las cookies no necesarias. El usuario puede modificar su elección en cualquier momento eliminando las cookies almacenadas desde la configuración de su navegador.
+Al acceder por primera vez al Sitio Web se muestra un aviso de cookies que permite aceptar o rechazar las cookies no necesarias. El usuario puede modificar su elección en cualquier momento <!--si-analitica-->con el enlace «Configurar cookies» del pie de página, o <!--/si-analitica-->eliminando las cookies almacenadas desde la configuración de su navegador.
 
 La mayoría de navegadores permiten gestionar las cookies desde sus opciones de configuración:
 

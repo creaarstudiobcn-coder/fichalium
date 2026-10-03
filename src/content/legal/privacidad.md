@@ -58,6 +58,9 @@ Los datos podrán ser comunicados a:
 - Proveedores de servicios tecnológicos (alojamiento, infraestructura) que actúan como encargados del tratamiento.
 - Proveedores de servicios de pago, para la gestión de las suscripciones.
 - Administraciones públicas cuando exista obligación legal.
+<!--si-analitica-->
+- Google Ireland Ltd. (Google Analytics), solo para estadísticas de visita de las páginas públicas y solo si la persona usuaria lo acepta en el aviso de cookies.
+<!--/si-analitica-->
 
 Algunos proveedores podrían estar ubicados fuera del Espacio Económico Europeo; en tal caso, se garantizan las salvaguardas adecuadas previstas en el RGPD.
 
