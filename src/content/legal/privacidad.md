@@ -37,6 +37,8 @@ Fichalium permite a la empresa cliente registrar la **ubicación puntual** de la
 - La ubicación registrada es accesible **únicamente para la empresa cliente** (responsable del tratamiento); la propia persona empleada no visualiza coordenadas en su vista de fichaje.
 - La empresa cliente, como responsable, debe **informar previamente a su plantilla y a la representación legal de los trabajadores** conforme al artículo 90 de la LOPDGDD y al artículo 20.3 del Estatuto de los Trabajadores. Dependalium pone a disposición del cliente el texto informativo y el contrato de encargo de tratamiento a tal efecto.
 
+**Recuento de visitas:** contamos de forma agregada las páginas vistas y los clics en teléfono, WhatsApp, correo o formulario, para saber qué páginas funcionan. No usa cookies, no guarda nada en tu navegador y no recoge datos que te identifiquen, así que no necesita tu consentimiento.
+
 ## 3. Finalidades y base jurídica
 
 | Finalidad | Base jurídica |

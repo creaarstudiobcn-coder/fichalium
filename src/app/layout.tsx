@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { CookieBanner } from "@/components/CookieBanner";
+import Script from "next/script";
 
 // Manrope para títulos y wordmark (ExtraBold 800); DM Mono para datos, horas e IDs.
 const manrope = Manrope({
@@ -33,6 +34,8 @@ export default function RootLayout({
       <body className="min-h-screen bg-offwhite text-navy antialiased">
         {children}
         <CookieBanner />
+        {/* Contador del grupo: sin cookies ni datos personales, no necesita consentimiento */}
+        <Script src="https://contador-grupo.vercel.app/s.js" strategy="afterInteractive" />
       </body>
     </html>
   );
