@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { getCompanyStatus, canManage, blockedMessage } from "@/lib/access";
 import { Brand } from "@/components/Brand";
+import { esAppMovil } from "@/lib/app-movil";
 
 async function SignOutButton({ label }: { label: string }) {
   return (
@@ -34,6 +35,8 @@ export default async function DashboardLayout({
   // y handler re-verifica por su cuenta (ver src/lib/access.ts).
   const status = await getCompanyStatus(session.user.companyId);
   const manage = canManage(status);
+  // En la app de Android no se enseña la suscripción (normas de pago de Google Play).
+  const app = await esAppMovil();
 
   return (
     <div className="min-h-screen">
@@ -55,7 +58,7 @@ export default async function DashboardLayout({
             {manage && isOwner && (
               <NavLink href="/dashboard/empleados">Empleados</NavLink>
             )}
-            {manage && isOwner && (
+            {manage && isOwner && !app && (
               <NavLink href="/dashboard/suscripcion">Suscripción</NavLink>
             )}
             {isOwner && (

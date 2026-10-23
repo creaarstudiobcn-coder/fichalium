@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -10,6 +10,11 @@ export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // En la app de Android no se da de alta la empresa (lleva a contratar).
+  const [app, setApp] = useState(false);
+  useEffect(() => {
+    setApp(document.cookie.split("; ").includes("fichalium_app=1"));
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -77,12 +82,18 @@ export default function LoginPage() {
           </Link>
         </p>
 
-        <p className="mt-6 text-center text-sm text-navy/60">
-          ¿Aún no tienes cuenta?{" "}
-          <Link href="/register" className="font-medium text-pulse hover:underline">
-            Crear empresa
-          </Link>
-        </p>
+        {app ? (
+          <p className="mt-6 text-center text-sm text-navy/60">
+            ¿Aún no tienes cuenta? Pide a tu empresa que te invite.
+          </p>
+        ) : (
+          <p className="mt-6 text-center text-sm text-navy/60">
+            ¿Aún no tienes cuenta?{" "}
+            <Link href="/register" className="font-medium text-pulse hover:underline">
+              Crear empresa
+            </Link>
+          </p>
+        )}
       </div>
     </main>
   );

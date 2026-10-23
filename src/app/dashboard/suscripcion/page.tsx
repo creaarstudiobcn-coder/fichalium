@@ -6,6 +6,7 @@ import { getSubscription } from "@/lib/billing/subscription";
 import { isActive, tramoFor, TRAMOS } from "@/lib/billing/plans";
 import { formatMadrid } from "@/lib/datetime";
 import { startCheckoutAction, openPortalAction } from "./actions";
+import { esAppMovil } from "@/lib/app-movil";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,8 @@ const STATUS_LABEL: Record<string, string> = {
 export default async function SuscripcionPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  // La suscripción no se gestiona desde la app de Android (normas de Google Play).
+  if (await esAppMovil()) redirect("/dashboard");
 
   // Empresa suspendida/de baja: sin gestión (el aviso lo pinta el layout).
   if (!canManage(await getCompanyStatus(session.user.companyId))) {

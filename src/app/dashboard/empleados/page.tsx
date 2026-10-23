@@ -9,6 +9,7 @@ import { formatMadrid } from "@/lib/datetime";
 import { NuevoEmpleadoForm } from "./NuevoEmpleadoForm";
 import { InvitarEmpleado } from "./InvitarEmpleado";
 import { setActiveAction } from "./actions";
+import { esAppMovil } from "@/lib/app-movil";
 
 export default async function EmpleadosPage() {
   const session = await auth();
@@ -36,6 +37,7 @@ export default async function EmpleadosPage() {
     getSubscription(session.user.companyId),
   ]);
   const subActive = isActive(sub?.status);
+  const app = await esAppMovil();
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
@@ -48,11 +50,16 @@ export default async function EmpleadosPage() {
       {!subActive && (
         <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Tu suscripción no está activa. El alta e invitación de empleados están
-          bloqueadas (fichar e informes siguen disponibles).{" "}
-          <Link href="/dashboard/suscripcion" className="font-medium underline text-pulse">
-            Gestionar suscripción
-          </Link>
-          .
+          bloqueadas (fichar e informes siguen disponibles).
+          {!app && (
+            <>
+              {" "}
+              <Link href="/dashboard/suscripcion" className="font-medium underline text-pulse">
+                Gestionar suscripción
+              </Link>
+              .
+            </>
+          )}
         </p>
       )}
 

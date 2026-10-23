@@ -6,6 +6,7 @@ import { getCompanyStatus, canManage } from "@/lib/access";
 import { withTenant } from "@/lib/tenant";
 import { getStripe } from "@/lib/billing/stripe";
 import { PRICE_ID, TRIAL_DAYS } from "@/lib/billing/plans";
+import { esAppMovil } from "@/lib/app-movil";
 
 const baseUrl = () => process.env.AUTH_URL ?? "http://localhost:3000";
 
@@ -16,6 +17,7 @@ const baseUrl = () => process.env.AUTH_URL ?? "http://localhost:3000";
 async function ownerSession() {
   const session = await auth();
   if (!session?.user || session.user.role !== "OWNER") return null;
+  if (await esAppMovil()) return null;
   if (!canManage(await getCompanyStatus(session.user.companyId))) return null;
   return session.user;
 }

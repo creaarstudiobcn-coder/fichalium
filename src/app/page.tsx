@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { IntroSplash } from "@/components/IntroSplash";
 import { LandingView } from "@/components/LandingView";
 import { getDictionary } from "@/i18n";
+import { esAppMovil } from "@/lib/app-movil";
 
 export async function generateMetadata(): Promise<Metadata> {
   const dict = getDictionary("es");
@@ -21,6 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   const session = await auth();
   if (session?.user) redirect("/dashboard");
+  // En la app no se enseña la portada (tiene precios y botones de contratar).
+  if (await esAppMovil()) redirect("/login");
 
   return (
     <>
