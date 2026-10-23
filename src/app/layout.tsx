@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { CookieBanner } from "@/components/CookieBanner";
@@ -24,7 +24,10 @@ export const metadata: Metadata = {
   title: "Fichalium · Control horario",
   description:
     "Fichalium: registro de jornada laboral para empresas en España. Cada empresa, sus datos aislados.",
+  appleWebApp: { title: "Fichalium", statusBarStyle: "default" },
 };
+
+export const viewport: Viewport = { themeColor: "#0F1339" };
 
 export default function RootLayout({
   children,
