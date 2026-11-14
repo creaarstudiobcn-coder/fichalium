@@ -62,6 +62,12 @@ const roleStatements = [
 const statements = [
   ...roleStatements,
 
+  // ───────────── Límite de intentos de login (src/lib/limite-intentos.ts) ─────────────
+  // Sin RLS a propósito: no es dato de cliente, solo hashes de email/IP y contadores.
+  // La crea el propietario (app_user no tiene CREATE) y se le dan permisos de uso.
+  `CREATE TABLE IF NOT EXISTS login_intentos (clave TEXT PRIMARY KEY, fallos INT NOT NULL DEFAULT 0, primero TIMESTAMPTZ NOT NULL DEFAULT now(), bloqueado_hasta TIMESTAMPTZ)`,
+  `GRANT SELECT, INSERT, UPDATE, DELETE ON login_intentos TO app_user`,
+
   // ───────────────────────── RLS: activar + FORCE en las 4 tablas ─────────────────────────
   // FORCE hace que la RLS aplique TAMBIÉN al rol propietario (Prisma se conecta
   // como neondb_owner en Neon). Así no hace falta crear un rol de app aparte.

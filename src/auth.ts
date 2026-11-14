@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { authConfig } from "@/auth.config";
 import { findUserForLogin } from "@/lib/tenant";
 import { loginSchema } from "@/lib/validation";
+import { accesoBloqueado, apuntarFallo, borrarFallos, ipDe } from "@/lib/limite-intentos";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -14,18 +15,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Contraseña", type: "password" },
       },
-      async authorize(raw) {
+      async authorize(raw, request) {
         const parsed = loginSchema.safeParse(raw);
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
 
+        // Seguridad: límite de intentos por email e IP (tabla login_intentos, fuera del RLS: solo hashes).
+        const ip = ipDe(request);
+        if (await accesoBloqueado(email, ip)) return null;
+
         // Login = búsqueda cross-tenant por email (no sabemos aún la empresa).
         const user = await findUserForLogin(email);
-        if (!user) return null;
+        if (!user) {
+          await apuntarFallo(email, ip);
+          return null;
+        }
 
         const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+        if (!valid) {
+          await apuntarFallo(email, ip);
+          return null;
+        }
+        await borrarFallos(email);
 
         // Lo que devolvemos aquí alimenta el callback jwt().
         return {
