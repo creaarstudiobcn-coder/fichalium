@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.fichalium.app",
+      "sha256_cert_fingerprints": [
+        "09:57:E1:44:51:65:60:38:DA:8E:32:78:69:0F:33:DA:5A:15:68:07:00:2B:CA:7B:E0:9B:4C:89:71:17:54:8E"
+      ]
+    }
+  }
+]
