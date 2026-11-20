@@ -13,7 +13,7 @@ import {
 } from "@/lib/employees";
 import { createInvitation, InvitationError } from "@/lib/invitations";
 import { getSubscription, syncQuantity } from "@/lib/billing/subscription";
-import { isActive } from "@/lib/billing/plans";
+import { tieneAcceso } from "@/lib/billing/plans";
 
 export type ActionState = { error?: string; ok?: boolean };
 
@@ -44,10 +44,10 @@ async function ownerGate(): Promise<Gate> {
   return { ok: true, user: session.user };
 }
 
-/** ¿La empresa tiene la suscripción activa/en prueba? (gating de admin). */
+/** ¿La empresa tiene la suscripción activa/en prueba, o es interna? (gating de admin). */
 async function hasActiveSubscription(companyId: string) {
   const sub = await getSubscription(companyId);
-  return isActive(sub?.status);
+  return tieneAcceso(companyId, sub?.status);
 }
 
 export async function createEmployeeAction(

@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { getCompanyStatus, canManage } from "@/lib/access";
 import { listEmployeesWithAccountStatus } from "@/lib/employees";
 import { getSubscription } from "@/lib/billing/subscription";
-import { isActive } from "@/lib/billing/plans";
+import { tieneAcceso } from "@/lib/billing/plans";
 import { formatMadrid } from "@/lib/datetime";
 import { NuevoEmpleadoForm } from "./NuevoEmpleadoForm";
 import { InvitarEmpleado } from "./InvitarEmpleado";
@@ -36,7 +36,7 @@ export default async function EmpleadosPage() {
     listEmployeesWithAccountStatus(session.user.companyId),
     getSubscription(session.user.companyId),
   ]);
-  const subActive = isActive(sub?.status);
+  const subActive = tieneAcceso(session.user.companyId, sub?.status);
   const app = await esAppMovil();
 
   return (

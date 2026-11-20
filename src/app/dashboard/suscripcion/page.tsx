@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { getCompanyStatus, canManage } from "@/lib/access";
 import { withTenant } from "@/lib/tenant";
 import { getSubscription } from "@/lib/billing/subscription";
-import { isActive, tramoFor, TRAMOS } from "@/lib/billing/plans";
+import { isActive, tramoFor, TRAMOS, esEmpresaInterna } from "@/lib/billing/plans";
 import { formatMadrid } from "@/lib/datetime";
 import { startCheckoutAction, openPortalAction } from "./actions";
 import { esAppMovil } from "@/lib/app-movil";
@@ -57,6 +57,13 @@ export default async function SuscripcionPage() {
       <p className="mt-1 text-sm text-navy/60">
         El precio es por tramos según el nº de empleados activos.
       </p>
+
+      {esEmpresaInterna(session.user.companyId) && (
+        <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Cuenta interna: esta empresa usa Fichalium sin suscripción. El alta de
+          empleados está habilitada y no se cobra nada.
+        </p>
+      )}
 
       {/* Estado actual */}
       <section className="mt-6 rounded-xl border border-navy/10 bg-white p-6">

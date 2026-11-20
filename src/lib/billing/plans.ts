@@ -24,6 +24,32 @@ export function isActive(status: string | null | undefined): boolean {
   return status === "active" || status === "trialing";
 }
 
+/**
+ * Empresas internas (las nuestras, p. ej. Dependalium Global Services): usan
+ * Fichalium sin suscripción. Lista de `company.id` separados por comas en la
+ * variable `FICHALIUM_EMPRESAS_INTERNAS`. Sin la variable, nadie es interno.
+ */
+export function esEmpresaInterna(
+  companyId: string,
+  lista: string | undefined = process.env.FICHALIUM_EMPRESAS_INTERNAS,
+): boolean {
+  if (!lista || !companyId) return false;
+  return lista
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .includes(companyId);
+}
+
+/** ¿Puede la empresa gestionar empleados? Interna, o suscripción activa/en prueba. */
+export function tieneAcceso(
+  companyId: string,
+  status: string | null | undefined,
+  lista?: string,
+): boolean {
+  return esEmpresaInterna(companyId, lista) || isActive(status);
+}
+
 /** Tramo (importe €/mes) en el que cae una plantilla de `count` empleados. */
 export function tramoFor(count: number): { eur: number; label: string } {
   // Sin plantilla no hay tramo: `count: 0` es el default del schema y aparece
