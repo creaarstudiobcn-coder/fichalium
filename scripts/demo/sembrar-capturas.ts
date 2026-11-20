@@ -12,7 +12,7 @@ const nombres = ["Laura Martín", "Carmen Ruiz", "Ana Belén Torres", "Rosa Nava
 // Madrid = UTC+1 en noviembre
 const hoy = new Date(); hoy.setUTCHours(0,0,0,0);
 await withTenant(company.id, async (tx) => {
-  const emps = [];
+  const emps: { id: string }[] = [];
   for (const n of nombres) emps.push(await tx.employee.create({ data: { companyId: company.id, name: n, email: n.toLowerCase().replace(/[^a-z]+/g,".") + "@example.com" } }));
   const entries: any[] = [];
   for (let d = 13; d >= 1; d--) {
