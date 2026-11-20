@@ -41,15 +41,17 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen">
       <nav className="border-b border-navy/10 bg-white">
-        <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap sm:px-6">
           <Brand
             size={28}
-            textClassName="hidden text-lg text-navy md:inline"
+            textClassName="text-lg text-navy sm:hidden md:inline"
             className="shrink-0"
           />
           <span className="hidden h-5 w-px shrink-0 bg-navy/10 md:inline-block" />
-          {/* Tira de enlaces: scroll horizontal propio en móvil, nunca de página. */}
-          <div className="no-scrollbar flex flex-1 items-center gap-1 overflow-x-auto whitespace-nowrap">
+          {/* Móvil: los enlaces bajan a su propia fila y se reparten en varias
+              líneas (antes una tira con scroll oculto cortaba «Informes» y
+              escondía «Empleados»). Desde sm: una sola fila como siempre. */}
+          <div className="no-scrollbar order-last -mx-1 flex w-full flex-wrap items-center gap-1 sm:order-none sm:mx-0 sm:w-auto sm:flex-1 sm:flex-nowrap sm:overflow-x-auto sm:whitespace-nowrap">
             {/* Sin gestión solo quedan los informes: el registro horario es una
                 obligación legal del cliente y nunca se le retira. */}
             {manage && <NavLink href="/dashboard">Panel</NavLink>}
@@ -67,7 +69,7 @@ export default async function DashboardLayout({
               </NavLink>
             )}
           </div>
-          <div className="shrink-0">
+          <div className="ml-auto shrink-0 sm:ml-0">
             <SignOutButton label="Cerrar sesión" />
           </div>
         </div>

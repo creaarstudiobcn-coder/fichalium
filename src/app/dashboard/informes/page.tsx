@@ -149,13 +149,14 @@ export default async function InformesPage({
           Horas trabajadas por día
         </h2>
         <div className="mt-3 overflow-x-auto rounded-xl border border-navy/10 bg-white">
-          <table className="w-full min-w-[480px] text-sm">
+          <table className="w-full min-w-0 text-sm">
             <thead className="border-b border-navy/10 bg-offwhite text-left text-xs uppercase tracking-wide text-navy/60">
               <tr className="whitespace-nowrap">
-                <th className="px-4 py-3 font-medium">Empleado</th>
-                <th className="px-4 py-3 font-medium">Día</th>
-                <th className="px-4 py-3 text-right font-medium">
-                  Horas trabajadas
+                <th className="px-3 py-3 sm:px-4 font-medium">Empleado</th>
+                <th className="px-3 py-3 sm:px-4 font-medium">Día</th>
+                <th className="px-3 py-3 sm:px-4 text-right font-medium">
+                  <span className="sm:hidden">Horas</span>
+                  <span className="hidden sm:inline">Horas trabajadas</span>
                 </th>
               </tr>
             </thead>
@@ -174,10 +175,10 @@ export default async function InformesPage({
                 const ongoing = d.pairs.some((p) => p.ongoing);
                 return (
                   <tr key={`${d.employeeId}-${d.day}`}>
-                    <td className="px-4 py-3 font-medium text-navy">
+                    <td className="px-3 py-3 sm:px-4 font-medium text-navy">
                       {d.employeeName}
                     </td>
-                    <td className="px-4 py-3 text-navy/70 font-mono">
+                    <td className="px-3 py-3 sm:px-4 text-navy/70 font-mono">
                       {formatMadridDate(new Date(`${d.day}T12:00:00Z`))}
                       {ongoing && (
                         <span className="ml-2 rounded-full bg-pulse/15 px-2 py-0.5 text-xs font-medium text-pulse">
@@ -185,7 +186,7 @@ export default async function InformesPage({
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-navy font-mono">
+                    <td className="whitespace-nowrap px-3 py-3 sm:px-4 text-right font-semibold text-navy font-mono">
                       {formatDuration(d.minutes)}
                     </td>
                   </tr>
