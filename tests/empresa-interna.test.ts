@@ -24,3 +24,10 @@ describe("Empresas internas (sin suscripción)", () => {
     expect(tieneAcceso("cmp_cliente", "trialing", lista)).toBe(true);
   });
 });
+
+describe("Lista por defecto de empresas internas", () => {
+  it("incluye Dependalium y no a un cliente cualquiera", () => {
+    expect(esEmpresaInterna("5663b033-90c9-4e95-8db0-442a49be36e7")).toBe(true);
+    expect(esEmpresaInterna("00000000-0000-0000-0000-000000000000")).toBe(false);
+  });
+});

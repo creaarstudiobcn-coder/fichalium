@@ -25,13 +25,19 @@ export function isActive(status: string | null | undefined): boolean {
 }
 
 /**
- * Empresas internas (las nuestras, p. ej. Dependalium Global Services): usan
- * Fichalium sin suscripción. Lista de `company.id` separados por comas en la
- * variable `FICHALIUM_EMPRESAS_INTERNAS`. Sin la variable, nadie es interno.
+ * Empresas internas (las nuestras): usan Fichalium sin suscripción.
+ * - 5663b033… = Dependalium Global Services (propietario dependalium@gmail.com).
+ * - 5013627e… = segunda empresa «dependalium» (ivanlopez1981@hotmail.es), para
+ *   pruebas y la cuenta de los revisores de Google Play.
+ * La variable `FICHALIUM_EMPRESAS_INTERNAS` (ids separados por comas), si existe,
+ * sustituye a esta lista. Los ids no son secretos.
  */
+export const EMPRESAS_INTERNAS =
+  "5663b033-90c9-4e95-8db0-442a49be36e7,5013627e-2071-433f-a3ca-181ed86de263";
+
 export function esEmpresaInterna(
   companyId: string,
-  lista: string | undefined = process.env.FICHALIUM_EMPRESAS_INTERNAS,
+  lista: string | undefined = process.env.FICHALIUM_EMPRESAS_INTERNAS ?? EMPRESAS_INTERNAS,
 ): boolean {
   if (!lista || !companyId) return false;
   return lista
